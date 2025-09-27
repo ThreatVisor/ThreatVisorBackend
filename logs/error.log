@@ -1,0 +1,412 @@
+2025-08-17T18:48:52: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+Error: bind EADDRINUSE 0.0.0.0:3000
+    at listenOnPrimaryHandle (node:net:1885:18)
+    at rr (node:internal/cluster/child:162:12)
+    at Worker.<anonymous> (node:internal/cluster/child:112:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:529:35)
+    at emit (node:internal/child_process:944:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+2025-08-17T18:48:52: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+Error: bind EADDRINUSE 0.0.0.0:3000
+    at listenOnPrimaryHandle (node:net:1885:18)
+    at rr (node:internal/cluster/child:162:12)
+    at Worker.<anonymous> (node:internal/cluster/child:112:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:529:35)
+    at emit (node:internal/child_process:944:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+2025-08-17T18:48:53: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+Error: bind EADDRINUSE 0.0.0.0:3000
+    at listenOnPrimaryHandle (node:net:1885:18)
+    at rr (node:internal/cluster/child:162:12)
+    at Worker.<anonymous> (node:internal/cluster/child:112:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:529:35)
+    at emit (node:internal/child_process:944:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+2025-08-17T18:53:02: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-08-17T18:57:23: [Microservice] ❌ OWASP ZAP failed: Command failed: docker run --rm -u root -v /home/balakrishnansyon/multi-scanner-microservice:/scan/wrk:rw zaproxy/zap-stable zap-baseline.py -t https://httpbin.org -J /scan/wrk/zap_report.json --autooff
+2025-08-17T18:57:23: 2025-08-17 18:57:22,852 A file based option has been specified but the directory '/zap/wrk' is not mounted 
+2025-08-17T18:57:23: 
+2025-08-17T18:57:23: [Microservice] ⚠️ OWASP ZAP report file not found
+2025-08-17T18:57:23: [Microservice] ❌ Failed to mark scan as completed: {
+2025-08-17T18:57:23:   message: 'TypeError: fetch failed',
+2025-08-17T18:57:23:   details: 'TypeError: fetch failed\n' +
+2025-08-17T18:57:23:     '    at node:internal/deps/undici/undici:12637:11\n' +
+2025-08-17T18:57:23:     '    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n' +
+2025-08-17T18:57:23:     '    at async file:///home/balakrishnansyon/multi-scanner-microservice/index.mjs:684:36',
+2025-08-17T18:57:23:   hint: '',
+2025-08-17T18:57:23:   code: ''
+2025-08-17T18:57:23: }
+2025-08-17T19:08:11: [Microservice] ❌ OWASP ZAP failed: Command failed: docker run --rm -u root -v /home/balakrishnansyon/multi-scanner-microservice:/scan/wrk:rw zaproxy/zap-stable zap-baseline.py -t https://httpbin.org -J /scan/wrk/zap_report.json --autooff
+2025-08-17T19:08:11: 2025-08-17 19:08:11,010 A file based option has been specified but the directory '/zap/wrk' is not mounted 
+2025-08-17T19:08:11: 
+2025-08-17T19:08:11: [Microservice] ⚠️ OWASP ZAP report file not found
+2025-08-17T19:08:11: [Microservice] ❌ Failed to mark scan as completed: {
+2025-08-17T19:08:11:   message: 'TypeError: fetch failed',
+2025-08-17T19:08:11:   details: 'TypeError: fetch failed\n' +
+2025-08-17T19:08:11:     '    at node:internal/deps/undici/undici:12637:11\n' +
+2025-08-17T19:08:11:     '    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n' +
+2025-08-17T19:08:11:     '    at async file:///home/balakrishnansyon/multi-scanner-microservice/index.mjs:684:36',
+2025-08-17T19:08:11:   hint: '',
+2025-08-17T19:08:11:   code: ''
+2025-08-17T19:08:11: }
+2025-08-17T20:37:20: [Microservice] ❌ OWASP ZAP failed: Command failed: docker run --rm -u root -v /home/balakrishnansyon/multi-scanner-microservice:/scan/wrk:rw zaproxy/zap-stable zap-baseline.py -t https://www.alereon.com/ -J /scan/wrk/zap_report.json --autooff
+2025-08-17T20:37:20: 2025-08-17 20:37:19,893 A file based option has been specified but the directory '/zap/wrk' is not mounted 
+2025-08-17T20:37:20: 
+2025-08-17T20:37:20: [Microservice] ⚠️ OWASP ZAP report file not found
+2025-08-17T20:42:21: [Microservice] ❌ Wapiti failed: Command failed: docker run --rm -v /home/balakrishnansyon/multi-scanner-microservice:/scan/wrk:rw wapiti-custom -u https://www.alereon.com/ -f json -o /scan/wrk/wapiti_report.json
+2025-08-17T20:42:21: /usr/local/lib/python3.12/html/parser.py:171: XMLParsedAsHTMLWarning: It looks like you're parsing an XML document using an HTML parser. If this really is an HTML document (maybe it's XHTML?), you can ignore or filter this warning. If it's XML, you should know that using an XML parser will be more reliable. To parse this document as XML, make sure you have the lxml package installed, and pass the keyword argument `features="xml"` into the BeautifulSoup constructor.
+2025-08-17T20:42:21:   k = self.parse_starttag(i)
+2025-08-17T20:42:21: 
+2025-08-17T20:42:21: [Microservice] ⚠️ Wapiti report file not found
+2025-08-17T20:42:22: [Microservice] ❌ Nikto failed: Command failed: docker run --rm -v /home/balakrishnansyon/multi-scanner-microservice:/scan/wrk:rw ghcr.io/sullo/nikto:latest -h https://www.alereon.com/ -output /scan/wrk/nikto_report.txt
+2025-08-17T20:42:22: + ERROR: Unable to open '/scan/wrk/nikto_report.txt' for write: 
+2025-08-17T20:42:22: 1 at /opt/nikto/plugins/nikto_report_text.plugin line 40.
+2025-08-17T20:42:22: 
+2025-08-17T20:42:22: [Microservice] ⚠️ Nikto report file not found
+2025-08-17T20:42:22: OpenAI error: {
+2025-08-17T20:42:22:     "error": {
+2025-08-17T20:42:22:         "message": "Incorrect API key provided: your_ope************here. You can find your API key at https://platform.openai.com/account/api-keys.",
+2025-08-17T20:42:22:         "type": "invalid_request_error",
+2025-08-17T20:42:22:         "param": null,
+2025-08-17T20:42:22:         "code": "invalid_api_key"
+2025-08-17T20:42:22:     }
+2025-08-17T20:42:22: }
+2025-08-17T20:42:22: 
+2025-08-17T20:42:23: OpenAI error: {
+2025-08-17T20:42:23:     "error": {
+2025-08-17T20:42:23:         "message": "Incorrect API key provided: your_ope************here. You can find your API key at https://platform.openai.com/account/api-keys.",
+2025-08-17T20:42:23:         "type": "invalid_request_error",
+2025-08-17T20:42:23:         "param": null,
+2025-08-17T20:42:23:         "code": "invalid_api_key"
+2025-08-17T20:42:23:     }
+2025-08-17T20:42:23: }
+2025-08-17T20:42:23: 
+2025-08-17T20:57:13: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-08-17T20:58:29: [Microservice] ⚠️ OWASP ZAP completed with warnings
+2025-08-17T20:58:31: [Microservice] ❌ reNgine failed: Command failed: docker run --rm -v /home/balakrishnansyon/multi-scanner-microservice/reports:/app/reports:rw --entrypoint sh custom-rengine -c "python3 -c "
+2025-08-17T20:58:31: import json
+2025-08-17T20:58:31: import socket
+2025-08-17T20:58:31: import requests
+2025-08-17T20:58:31: from urllib.parse import urlparse
+2025-08-17T20:58:31: 
+2025-08-17T20:58:31: target = 'https://www.alereon.com/'
+2025-08-17T20:58:31: parsed = urlparse(target)
+2025-08-17T20:58:31: domain = parsed.netloc
+2025-08-17T20:58:31: 
+2025-08-17T20:58:31: result = {
+2025-08-17T20:58:31:     'target': target,
+2025-08-17T20:58:31:     'domain': domain,
+2025-08-17T20:58:31:     'vulnerabilities': []
+2025-08-17T20:58:31: }
+2025-08-17T20:58:31: 
+2025-08-17T20:58:31: try:
+2025-08-17T20:58:31:     # Get IP
+2025-08-17T20:58:31:     ip = socket.gethostbyname(domain)
+2025-08-17T20:58:31:     result['ip'] = ip
+2025-08-17T20:58:31:     
+2025-08-17T20:58:31:     # Basic HTTP headers check
+2025-08-17T20:58:31:     resp = requests.get(target, timeout=10)
+2025-08-17T20:58:31:     headers = dict(resp.headers)
+2025-08-17T20:58:31:     
+2025-08-17T20:58:31:     # Check for missing security headers
+2025-08-17T20:58:31:     security_headers = ['X-Frame-Options', 'X-Content-Type-Options', 'Strict-Transport-Security', 'Content-Security-Policy']
+2025-08-17T20:58:31:     for header in security_headers:
+2025-08-17T20:58:31:         if header not in headers:
+2025-08-17T20:58:31:             result['vulnerabilities'].append({
+2025-08-17T20:58:31:                 'name': f'Missing {header} Header',
+2025-08-17T20:58:31:                 'severity': 'Low',
+2025-08-17T20:58:31:                 'description': f'The {header} security header is not set',
+2025-08-17T20:58:31:                 'url': target
+2025-08-17T20:58:31:             })
+2025-08-17T20:58:31:             
+2025-08-17T20:58:31: except Exception as e:
+2025-08-17T20:58:31:     result['error'] = str(e)
+2025-08-17T20:58:31: 
+2025-08-17T20:58:31: with open('/app/reports/rengine_report.json', 'w') as f:
+2025-08-17T20:58:31:     json.dump(result, f, indent=2)
+2025-08-17T20:58:31: ""
+2025-08-17T20:58:31: Argument expected for the -c option
+2025-08-17T20:58:31: usage: python3 [option] ... [-c cmd | -m mod | file | -] [arg] ...
+2025-08-17T20:58:31: Try `python -h' for more information.
+2025-08-17T20:58:31: /bin/sh: 2: import: not found
+2025-08-17T20:58:31: /bin/sh: 3: import: not found
+2025-08-17T20:58:31: /bin/sh: 4: import: not found
+2025-08-17T20:58:31: /bin/sh: 5: from: not found
+2025-08-17T20:58:31: /bin/sh: 7: target: not found
+2025-08-17T20:58:31: /bin/sh: 8: Syntax error: "(" unexpected
+2025-08-17T20:58:31: 
+2025-08-17T20:58:31: [Microservice] ⚠️ reNgine report file not found
+2025-08-17T20:58:31: [Microservice] ❌ Wapiti failed: Command failed: docker run --rm --timeout 120 -v /home/balakrishnansyon/multi-scanner-microservice/reports:/tmp/reports:rw wapiti-custom -u https://www.alereon.com/ -f json -o /tmp/reports/wapiti_report.json --scope page --max-scan-time 60
+2025-08-17T20:58:31: unknown flag: --timeout
+2025-08-17T20:58:31: See 'docker run --help'.
+2025-08-17T20:58:31: 
+2025-08-17T20:58:31: [Microservice] ⚠️ Wapiti report file not found
+2025-08-17T21:03:31: [Microservice] ❌ Nikto failed: Command failed: docker run --rm -v /home/balakrishnansyon/multi-scanner-microservice/reports:/tmp/reports:rw ghcr.io/sullo/nikto:latest -h https://www.alereon.com/ -output /tmp/reports/nikto_report.txt -timeout 30
+2025-08-17T21:03:31: 
+2025-08-17T21:03:31: [Microservice] ⚠️ w3af report file not found
+2025-08-17T21:11:30: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-08-17T21:12:49: [Microservice] ⚠️ OWASP ZAP completed with warnings
+2025-08-17T21:17:51: [Microservice] ❌ Wapiti failed: Command failed: docker run --rm -v /home/balakrishnansyon/multi-scanner-microservice/reports:/tmp/reports:rw wapiti-custom -u https://www.alereon.com/ -f json -o /tmp/reports/wapiti_report.json
+2025-08-17T21:17:51: /usr/local/lib/python3.12/html/parser.py:171: XMLParsedAsHTMLWarning: It looks like you're parsing an XML document using an HTML parser. If this really is an HTML document (maybe it's XHTML?), you can ignore or filter this warning. If it's XML, you should know that using an XML parser will be more reliable. To parse this document as XML, make sure you have the lxml package installed, and pass the keyword argument `features="xml"` into the BeautifulSoup constructor.
+2025-08-17T21:17:51:   k = self.parse_starttag(i)
+2025-08-17T21:17:51: 
+2025-08-17T21:17:51: [Microservice] ⚠️ Wapiti report file not found
+2025-08-17T21:22:51: [Microservice] ❌ Nikto failed: Command failed: docker run --rm -v /home/balakrishnansyon/multi-scanner-microservice/reports:/tmp/reports:rw ghcr.io/sullo/nikto:latest -h https://www.alereon.com/ -output /tmp/reports/nikto_report.txt -timeout 30
+2025-08-17T21:22:51: 
+2025-08-17T21:22:52: [Microservice] ⚠️ w3af report file not found
+2025-08-17T22:21:11: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-08-17T22:21:32: SyntaxError: Unexpected end of JSON input
+2025-08-17T22:21:32:     at JSON.parse (<anonymous>)
+2025-08-17T22:21:32:     at parse (/home/balakrishnansyon/multi-scanner-microservice/node_modules/body-parser/lib/types/json.js:92:19)
+2025-08-17T22:21:32:     at /home/balakrishnansyon/multi-scanner-microservice/node_modules/body-parser/lib/read.js:128:18
+2025-08-17T22:21:32:     at AsyncResource.runInAsyncScope (node:async_hooks:203:9)
+2025-08-17T22:21:32:     at invokeCallback (/home/balakrishnansyon/multi-scanner-microservice/node_modules/raw-body/index.js:238:16)
+2025-08-17T22:21:32:     at done (/home/balakrishnansyon/multi-scanner-microservice/node_modules/raw-body/index.js:227:7)
+2025-08-17T22:21:32:     at IncomingMessage.onEnd (/home/balakrishnansyon/multi-scanner-microservice/node_modules/raw-body/index.js:287:7)
+2025-08-17T22:21:32:     at IncomingMessage.emit (node:events:517:28)
+2025-08-17T22:21:32:     at endReadableNT (node:internal/streams/readable:1400:12)
+2025-08-17T22:21:32:     at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+2025-08-17T22:33:26: [Microservice] ❌ Failed to insert vulnerabilities: {
+2025-08-17T22:33:26:   code: '22P02',
+2025-08-17T22:33:26:   details: null,
+2025-08-17T22:33:26:   hint: null,
+2025-08-17T22:33:26:   message: 'invalid input syntax for type integer: "csp"'
+2025-08-17T22:33:26: }
+2025-08-17T22:45:06: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-08-18T02:24:41: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-08-18T02:36:04: [Microservice] ❌ Failed to insert vulnerabilities: {
+2025-08-18T02:36:04:   code: 'PGRST204',
+2025-08-18T02:36:04:   details: null,
+2025-08-18T02:36:04:   hint: null,
+2025-08-18T02:36:04:   message: "Could not find the 'attack_scenarios' column of 'vulnerabilities' in the schema cache"
+2025-08-18T02:36:04: }
+2025-08-18T02:54:49: [Microservice] ❌ Failed to insert vulnerabilities: {
+2025-08-18T02:54:49:   code: 'PGRST204',
+2025-08-18T02:54:49:   details: null,
+2025-08-18T02:54:49:   hint: null,
+2025-08-18T02:54:49:   message: "Could not find the 'attack_scenarios' column of 'vulnerabilities' in the schema cache"
+2025-08-18T02:54:49: }
+2025-08-18T03:54:18: SyntaxError: Strict mode code may not include a with statement
+2025-08-18T03:54:18:     at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:152:18)
+2025-08-18T03:54:18:     at ModuleLoader.moduleProvider (node:internal/modules/esm/loader:299:14)
+2025-08-18T03:54:18:     at async link (node:internal/modules/esm/module_job:67:21)
+2025-08-18T04:17:52: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-08-18T04:19:08: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-08-18T04:40:13: [Microservice] ❌ Failed to insert vulnerabilities: {
+2025-08-18T04:40:13:   code: 'PGRST204',
+2025-08-18T04:40:13:   details: null,
+2025-08-18T04:40:13:   hint: null,
+2025-08-18T04:40:13:   message: "Could not find the 'attack_scenarios' column of 'vulnerabilities' in the schema cache"
+2025-08-18T04:40:13: }
+2025-08-18T04:50:52: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-08-18T05:17:40: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-08-18T17:17:35: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-08-18T17:30:54: [Microservice] ❌ OpenAI API error (400): {
+2025-08-18T17:30:54:   "error": {
+2025-08-18T17:30:54:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-18T17:30:54:     "type": "invalid_request_error",
+2025-08-18T17:30:54:     "param": "max_tokens",
+2025-08-18T17:30:54:     "code": "unsupported_parameter"
+2025-08-18T17:30:54:   }
+2025-08-18T17:30:54: }
+2025-08-19T01:04:48: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-08-19T01:16:29: [Microservice] ❌ OpenAI API error (400): {
+2025-08-19T01:16:29:   "error": {
+2025-08-19T01:16:29:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-19T01:16:29:     "type": "invalid_request_error",
+2025-08-19T01:16:29:     "param": "max_tokens",
+2025-08-19T01:16:29:     "code": "unsupported_parameter"
+2025-08-19T01:16:29:   }
+2025-08-19T01:16:29: }
+2025-08-19T02:36:34: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-08-19T02:48:12: [Microservice] ❌ OpenAI API error (400): {
+2025-08-19T02:48:12:   "error": {
+2025-08-19T02:48:12:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-19T02:48:12:     "type": "invalid_request_error",
+2025-08-19T02:48:12:     "param": "max_tokens",
+2025-08-19T02:48:12:     "code": "unsupported_parameter"
+2025-08-19T02:48:12:   }
+2025-08-19T02:48:12: }
+2025-08-19T04:41:54: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-08-19T04:53:02: [Microservice] ❌ OpenAI API error (400): {
+2025-08-19T04:53:02:   "error": {
+2025-08-19T04:53:02:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-19T04:53:02:     "type": "invalid_request_error",
+2025-08-19T04:53:02:     "param": "max_tokens",
+2025-08-19T04:53:02:     "code": "unsupported_parameter"
+2025-08-19T04:53:02:   }
+2025-08-19T04:53:02: }
+2025-08-19T15:08:42: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-08-19T15:23:29: [Microservice] ❌ OpenAI API error (400): {
+2025-08-19T15:23:29:   "error": {
+2025-08-19T15:23:29:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-19T15:23:29:     "type": "invalid_request_error",
+2025-08-19T15:23:29:     "param": "max_tokens",
+2025-08-19T15:23:29:     "code": "unsupported_parameter"
+2025-08-19T15:23:29:   }
+2025-08-19T15:23:29: }
+2025-08-19T20:32:49: [Microservice] ❌ OpenAI API error (400): {
+2025-08-19T20:32:49:   "error": {
+2025-08-19T20:32:49:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-19T20:32:49:     "type": "invalid_request_error",
+2025-08-19T20:32:49:     "param": "max_tokens",
+2025-08-19T20:32:49:     "code": "unsupported_parameter"
+2025-08-19T20:32:49:   }
+2025-08-19T20:32:49: }
+2025-08-19T21:40:33: [Microservice] ❌ OpenAI API error (400): {
+2025-08-19T21:40:33:   "error": {
+2025-08-19T21:40:33:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-19T21:40:33:     "type": "invalid_request_error",
+2025-08-19T21:40:33:     "param": "max_tokens",
+2025-08-19T21:40:33:     "code": "unsupported_parameter"
+2025-08-19T21:40:33:   }
+2025-08-19T21:40:33: }
+2025-08-19T22:43:55: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-08-19T22:43:55: ReferenceError: funct is not defined
+2025-08-19T22:43:55:     at file:///home/balakrishnansyon/multi-scanner-microservice/index.mjs:1:1
+2025-08-19T22:43:55:     at ModuleJob.run (node:internal/modules/esm/module_job:195:25)
+2025-08-19T22:43:55:     at async ModuleLoader.import (node:internal/modules/esm/loader:337:24)
+2025-08-19T22:43:55:     at async importModuleDynamicallyWrapper (node:internal/vm/module:432:15)
+2025-08-19T22:48:27: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-08-19T22:59:31: [Microservice] ❌ OpenAI API error (400): {
+2025-08-19T22:59:31:   "error": {
+2025-08-19T22:59:31:     "message": "Unsupported value: 'temperature' does not support 0.2 with this model. Only the default (1) value is supported.",
+2025-08-19T22:59:31:     "type": "invalid_request_error",
+2025-08-19T22:59:31:     "param": "temperature",
+2025-08-19T22:59:31:     "code": "unsupported_value"
+2025-08-19T22:59:31:   }
+2025-08-19T22:59:31: }
+2025-08-19T23:18:25: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-08-19T23:29:38: ❌ OpenAI API error (400): {
+2025-08-19T23:29:38:   "error": {
+2025-08-19T23:29:38:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-19T23:29:38:     "type": "invalid_request_error",
+2025-08-19T23:29:38:     "param": "max_tokens",
+2025-08-19T23:29:38:     "code": "unsupported_parameter"
+2025-08-19T23:29:38:   }
+2025-08-19T23:29:38: }
+2025-08-21T21:35:08: ❌ OpenAI API error (400): {
+2025-08-21T21:35:08:   "error": {
+2025-08-21T21:35:08:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-21T21:35:08:     "type": "invalid_request_error",
+2025-08-21T21:35:08:     "param": "max_tokens",
+2025-08-21T21:35:08:     "code": "unsupported_parameter"
+2025-08-21T21:35:08:   }
+2025-08-21T21:35:08: }
+2025-08-25T15:46:34: ❌ OpenAI API error (400): {
+2025-08-25T15:46:34:   "error": {
+2025-08-25T15:46:34:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-25T15:46:34:     "type": "invalid_request_error",
+2025-08-25T15:46:34:     "param": "max_tokens",
+2025-08-25T15:46:34:     "code": "unsupported_parameter"
+2025-08-25T15:46:34:   }
+2025-08-25T15:46:34: }
+2025-08-25T16:03:38: ❌ OpenAI API error (400): {
+2025-08-25T16:03:38:   "error": {
+2025-08-25T16:03:38:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-25T16:03:38:     "type": "invalid_request_error",
+2025-08-25T16:03:38:     "param": "max_tokens",
+2025-08-25T16:03:38:     "code": "unsupported_parameter"
+2025-08-25T16:03:38:   }
+2025-08-25T16:03:38: }
+2025-08-26T00:52:46: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-08-26T03:24:54: ❌ OpenAI API error (400): {
+2025-08-26T03:24:54:   "error": {
+2025-08-26T03:24:54:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-26T03:24:54:     "type": "invalid_request_error",
+2025-08-26T03:24:54:     "param": "max_tokens",
+2025-08-26T03:24:54:     "code": "unsupported_parameter"
+2025-08-26T03:24:54:   }
+2025-08-26T03:24:54: }
+2025-08-26T03:52:00: ❌ OpenAI API error (400): {
+2025-08-26T03:52:00:   "error": {
+2025-08-26T03:52:00:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-26T03:52:00:     "type": "invalid_request_error",
+2025-08-26T03:52:00:     "param": "max_tokens",
+2025-08-26T03:52:00:     "code": "unsupported_parameter"
+2025-08-26T03:52:00:   }
+2025-08-26T03:52:00: }
+2025-08-26T03:53:24: ❌ OpenAI API error (400): {
+2025-08-26T03:53:24:   "error": {
+2025-08-26T03:53:24:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-26T03:53:24:     "type": "invalid_request_error",
+2025-08-26T03:53:24:     "param": "max_tokens",
+2025-08-26T03:53:24:     "code": "unsupported_parameter"
+2025-08-26T03:53:24:   }
+2025-08-26T03:53:24: }
+2025-08-26T05:01:48: ❌ OpenAI API error (400): {
+2025-08-26T05:01:48:   "error": {
+2025-08-26T05:01:48:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-26T05:01:48:     "type": "invalid_request_error",
+2025-08-26T05:01:48:     "param": "max_tokens",
+2025-08-26T05:01:48:     "code": "unsupported_parameter"
+2025-08-26T05:01:48:   }
+2025-08-26T05:01:48: }
+2025-08-26T05:28:43: ❌ OpenAI API error (400): {
+2025-08-26T05:28:43:   "error": {
+2025-08-26T05:28:43:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-26T05:28:43:     "type": "invalid_request_error",
+2025-08-26T05:28:43:     "param": "max_tokens",
+2025-08-26T05:28:43:     "code": "unsupported_parameter"
+2025-08-26T05:28:43:   }
+2025-08-26T05:28:43: }
+2025-08-26T05:35:08: ❌ OpenAI API error (400): {
+2025-08-26T05:35:08:   "error": {
+2025-08-26T05:35:08:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-26T05:35:08:     "type": "invalid_request_error",
+2025-08-26T05:35:08:     "param": "max_tokens",
+2025-08-26T05:35:08:     "code": "unsupported_parameter"
+2025-08-26T05:35:08:   }
+2025-08-26T05:35:08: }
+2025-08-28T01:53:02: ❌ OpenAI API error (400): {
+2025-08-28T01:53:02:   "error": {
+2025-08-28T01:53:02:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-28T01:53:02:     "type": "invalid_request_error",
+2025-08-28T01:53:02:     "param": "max_tokens",
+2025-08-28T01:53:02:     "code": "unsupported_parameter"
+2025-08-28T01:53:02:   }
+2025-08-28T01:53:02: }
+2025-08-28T01:55:42: ❌ OpenAI API error (400): {
+2025-08-28T01:55:42:   "error": {
+2025-08-28T01:55:42:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-28T01:55:42:     "type": "invalid_request_error",
+2025-08-28T01:55:42:     "param": "max_tokens",
+2025-08-28T01:55:42:     "code": "unsupported_parameter"
+2025-08-28T01:55:42:   }
+2025-08-28T01:55:42: }
+2025-08-30T22:19:25: ❌ OpenAI API error (400): {
+2025-08-30T22:19:25:   "error": {
+2025-08-30T22:19:25:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-08-30T22:19:25:     "type": "invalid_request_error",
+2025-08-30T22:19:25:     "param": "max_tokens",
+2025-08-30T22:19:25:     "code": "unsupported_parameter"
+2025-08-30T22:19:25:   }
+2025-08-30T22:19:25: }
+2025-09-16T15:59:44: ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+2025-09-19T15:25:47: ❌ OpenAI API error (400): {
+2025-09-19T15:25:47:   "error": {
+2025-09-19T15:25:47:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-09-19T15:25:47:     "type": "invalid_request_error",
+2025-09-19T15:25:47:     "param": "max_tokens",
+2025-09-19T15:25:47:     "code": "unsupported_parameter"
+2025-09-19T15:25:47:   }
+2025-09-19T15:25:47: }
+2025-09-26T12:51:49: ❌ OpenAI API error (400): {
+2025-09-26T12:51:49:   "error": {
+2025-09-26T12:51:49:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-09-26T12:51:49:     "type": "invalid_request_error",
+2025-09-26T12:51:49:     "param": "max_tokens",
+2025-09-26T12:51:49:     "code": "unsupported_parameter"
+2025-09-26T12:51:49:   }
+2025-09-26T12:51:49: }
+2025-09-27T20:09:49: ❌ OpenAI API error (400): {
+2025-09-27T20:09:49:   "error": {
+2025-09-27T20:09:49:     "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+2025-09-27T20:09:49:     "type": "invalid_request_error",
+2025-09-27T20:09:49:     "param": "max_tokens",
+2025-09-27T20:09:49:     "code": "unsupported_parameter"
+2025-09-27T20:09:49:   }
+2025-09-27T20:09:49: }

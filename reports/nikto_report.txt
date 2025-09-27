@@ -1,0 +1,568 @@
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/wp-json/>; rel="https://api.w.org/",<https://www.alereon.com/wp-json/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ PNDTROOH /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-content/debug.log: PHP error reveals file system path.
++ GET /wp-content/debug.log: PHP debug log found.
++ GET /wp-content/uploads/: Directory indexing found.
++ GET /wp-content/uploads/: Wordpress uploads directory is browsable. This may reveal sensitive information.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/wp-json/>; rel="https://api.w.org/",<https://www.alereon.com/wp-json/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ DGUTIGHT /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-content/debug.log: PHP error reveals file system path.
++ GET /wp-content/debug.log: PHP debug log found.
++ GET /wp-content/uploads/: Directory indexing found.
++ GET /wp-content/uploads/: Wordpress uploads directory is browsable. This may reveal sensitive information.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/wp-json/>; rel="https://api.w.org/",<https://www.alereon.com/wp-json/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ LMVKDRNE /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-content/debug.log: PHP error reveals file system path.
++ GET /wp-content/debug.log: PHP debug log found.
++ GET /wp-content/uploads/: Directory indexing found.
++ GET /wp-content/uploads/: Wordpress uploads directory is browsable. This may reveal sensitive information.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/wp-json/>; rel="https://api.w.org/",<https://www.alereon.com/wp-json/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ JFNSXHSJ /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-content/debug.log: PHP error reveals file system path.
++ GET /wp-content/debug.log: PHP debug log found.
++ GET /wp-content/uploads/: Directory indexing found.
++ GET /wp-content/uploads/: Wordpress uploads directory is browsable. This may reveal sensitive information.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/wp-json/>; rel="https://api.w.org/",<https://www.alereon.com/wp-json/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ QHOFRGHQ /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-content/debug.log: PHP error reveals file system path.
++ GET /wp-content/debug.log: PHP debug log found.
++ GET /wp-content/uploads/: Directory indexing found.
++ GET /wp-content/uploads/: Wordpress uploads directory is browsable. This may reveal sensitive information.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/wp-json/>; rel="https://api.w.org/",<https://www.alereon.com/wp-json/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ VICQMJGV /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-content/debug.log: PHP error reveals file system path.
++ GET /wp-content/debug.log: PHP debug log found.
++ GET /wp-content/uploads/: Directory indexing found.
++ GET /wp-content/uploads/: Wordpress uploads directory is browsable. This may reveal sensitive information.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/wp-json/>; rel="https://api.w.org/",<https://www.alereon.com/wp-json/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ FJTLVLKY /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
+- Nikto v2.5.0/
++ Target Host: 
++ Target Port: 80
++ GET ERROR: Cannot resolve hostname '-C' because 'Name does not resolve'.
+- Nikto v2.5.0/
++ Target Host: 
++ Target Port: 80
++ GET ERROR: Cannot resolve hostname '-C' because 'Name does not resolve'.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/wp-json/>; rel="https://api.w.org/",<https://www.alereon.com/wp-json/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ ABZIORRI /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/wp-json/>; rel="https://api.w.org/",<https://www.alereon.com/wp-json/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/wp-json/>; rel="https://api.w.org/",<https://www.alereon.com/wp-json/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ OBPQIJLD /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-content/debug.log: PHP error reveals file system path.
++ GET /wp-content/debug.log: PHP debug log found.
++ GET /wp-content/uploads/: Directory indexing found.
++ GET /wp-content/uploads/: Wordpress uploads directory is browsable. This may reveal sensitive information.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/wp-json/>; rel="https://api.w.org/",<https://www.alereon.com/wp-json/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ IZWFQGHB /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-content/debug.log: PHP error reveals file system path.
++ GET /wp-content/debug.log: PHP debug log found.
++ GET /wp-content/uploads/: Directory indexing found.
++ GET /wp-content/uploads/: Wordpress uploads directory is browsable. This may reveal sensitive information.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/wp-json/>; rel="https://api.w.org/",<https://www.alereon.com/wp-json/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ HTPOARCH /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-content/debug.log: PHP error reveals file system path.
++ GET /wp-content/debug.log: PHP debug log found.
++ GET /wp-content/uploads/: Directory indexing found.
++ GET /wp-content/uploads/: Wordpress uploads directory is browsable. This may reveal sensitive information.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/wp-json/>; rel="https://api.w.org/",<https://www.alereon.com/wp-json/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ MGCSKCCE /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-content/debug.log: PHP error reveals file system path.
++ GET /wp-content/debug.log: PHP debug log found.
++ GET /wp-content/uploads/: Directory indexing found.
++ GET /wp-content/uploads/: Wordpress uploads directory is browsable. This may reveal sensitive information.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/index.php?rest_route=/>; rel="https://api.w.org/",<https://www.alereon.com/index.php?rest_route=/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ HEAD Apache/2.4.62 appears to be outdated (current is at least 2.4.63). Apache 2.2.34 is the EOL for the 2.x branch.
++ EKWIGAFY /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ DEBUG /: DEBUG HTTP verb may show server debugging information. See: https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-enable-debugging-for-aspnet-applications?view=vs-2017: 
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/index.php?rest_route=/>; rel="https://api.w.org/",<https://www.alereon.com/index.php?rest_route=/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ HEAD Apache/2.4.62 appears to be outdated (current is at least 2.4.63). Apache 2.2.34 is the EOL for the 2.x branch.
++ VGZBICLM /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ DEBUG /: DEBUG HTTP verb may show server debugging information. See: https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-enable-debugging-for-aspnet-applications?view=vs-2017: 
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/index.php?rest_route=/>; rel="https://api.w.org/",<https://www.alereon.com/index.php?rest_route=/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ HEAD Apache/2.4.62 appears to be outdated (current is at least 2.4.63). Apache 2.2.34 is the EOL for the 2.x branch.
++ FDLLHJDM /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ DEBUG /: DEBUG HTTP verb may show server debugging information. See: https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-enable-debugging-for-aspnet-applications?view=vs-2017: 
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/index.php?rest_route=/>; rel="https://api.w.org/",<https://www.alereon.com/index.php?rest_route=/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ HEAD Apache/2.4.62 appears to be outdated (current is at least 2.4.63). Apache 2.2.34 is the EOL for the 2.x branch.
++ CWEZIOYP /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ DEBUG /: DEBUG HTTP verb may show server debugging information. See: https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-enable-debugging-for-aspnet-applications?view=vs-2017: 
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/index.php?rest_route=/>; rel="https://api.w.org/",<https://www.alereon.com/index.php?rest_route=/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ HEAD Apache/2.4.62 appears to be outdated (current is at least 2.4.63). Apache 2.2.34 is the EOL for the 2.x branch.
++ SGPIEBEY /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ DEBUG /: DEBUG HTTP verb may show server debugging information. See: https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-enable-debugging-for-aspnet-applications?view=vs-2017: 
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/index.php?rest_route=/>; rel="https://api.w.org/",<https://www.alereon.com/index.php?rest_route=/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ HEAD Apache/2.4.62 appears to be outdated (current is at least 2.4.63). Apache 2.2.34 is the EOL for the 2.x branch.
++ UYONALPX /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ DEBUG /: DEBUG HTTP verb may show server debugging information. See: https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-enable-debugging-for-aspnet-applications?view=vs-2017: 
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/index.php?rest_route=/>; rel="https://api.w.org/",<https://www.alereon.com/index.php?rest_route=/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ HEAD Apache/2.4.62 appears to be outdated (current is at least 2.4.63). Apache 2.2.34 is the EOL for the 2.x branch.
++ QYFMNWJA /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ DEBUG /: DEBUG HTTP verb may show server debugging information. See: https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-enable-debugging-for-aspnet-applications?view=vs-2017: 
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/index.php?rest_route=/>; rel="https://api.w.org/",<https://www.alereon.com/index.php?rest_route=/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ HEAD Apache/2.4.62 appears to be outdated (current is at least 2.4.63). Apache 2.2.34 is the EOL for the 2.x branch.
++ GZYQIGZF /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ DEBUG /: DEBUG HTTP verb may show server debugging information. See: https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-enable-debugging-for-aspnet-applications?view=vs-2017: 
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/index.php?rest_route=/>; rel="https://api.w.org/",<https://www.alereon.com/index.php?rest_route=/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ HEAD Apache/2.4.62 appears to be outdated (current is at least 2.4.63). Apache 2.2.34 is the EOL for the 2.x branch.
++ XLCROQUE /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ DEBUG /: DEBUG HTTP verb may show server debugging information. See: https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-enable-debugging-for-aspnet-applications?view=vs-2017: 
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/index.php?rest_route=/>; rel="https://api.w.org/",<https://www.alereon.com/index.php?rest_route=/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ HEAD Apache/2.4.62 appears to be outdated (current is at least 2.4.63). Apache 2.2.34 is the EOL for the 2.x branch.
++ KBHVIOIS /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ DEBUG /: DEBUG HTTP verb may show server debugging information. See: https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-enable-debugging-for-aspnet-applications?view=vs-2017: 
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.
+- Nikto v2.5.0/
++ Target Host: www.alereon.com
++ Target Port: 443
++ GET /: Link header(s) found with value(s): <https://www.alereon.com/index.php?rest_route=/>; rel="https://api.w.org/",<https://www.alereon.com/index.php?rest_route=/wp/v2/pages/35>; rel="alternate"; title="JSON"; type="application/json",<https://www.alereon.com/>; rel=shortlink. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link: 
++ GET /: The site uses TLS and the Strict-Transport-Security HTTP header is not defined. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/: 
++ GET /index.php?: Uncommon header(s) 'x-redirect-by' found, with contents: WordPress.
++ GET /: The Content-Encoding header is set to "deflate" which may mean that the server is vulnerable to the BREACH attack. See: http://breachattack.com/: 
++ GET /: Suggested security header missing: content-security-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP: 
++ GET /: Suggested security header missing: permissions-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy: 
++ GET /: Suggested security header missing: referrer-policy. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy: 
++ GET /: Suggested security header missing: strict-transport-security. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security: 
++ GET /: Suggested security header missing: x-content-type-options. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options: 
++ HEAD Apache/2.4.62 appears to be outdated (current is at least 2.4.63). Apache 2.2.34 is the EOL for the 2.x branch.
++ QFUTZMII /: Web Server returns a valid response with junk HTTP methods which may cause false positives.
++ DEBUG /: DEBUG HTTP verb may show server debugging information. See: https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-enable-debugging-for-aspnet-applications?view=vs-2017: 
++ GET /manual/: Web server manual found.
++ GET /manual/images/: Directory indexing found.
++ GET /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ GET /wp-links-opml.php: This WordPress script reveals the installed version.
++ GET /license.txt: License file found may identify site software.
++ GET /: A Wordpress installation was found.
++ GET /wp-login.php:X-Frame-Options header is deprecated and was replaced with the Content-Security-Policy HTTP header with the frame-ancestors directive instead. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options: 
++ GET /wp-login.php: Wordpress login found.

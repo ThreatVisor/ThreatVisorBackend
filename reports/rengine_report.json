@@ -1,0 +1,41 @@
+{
+  "target": "https://pranascience.com/",
+  "vulnerabilities": [
+    {
+      "name": "Missing Content Security Policy",
+      "severity": "medium",
+      "description": "The Content-Security-Policy security header is not configured",
+      "url": "https://pranascience.com/"
+    },
+    {
+      "name": "Missing X-Frame-Options Header",
+      "severity": "medium",
+      "description": "The X-Frame-Options security header is not configured",
+      "url": "https://pranascience.com/"
+    },
+    {
+      "name": "Missing HSTS Header",
+      "severity": "medium",
+      "description": "The Strict-Transport-Security security header is not configured",
+      "url": "https://pranascience.com/"
+    },
+    {
+      "name": "Missing X-Content-Type-Options Header",
+      "severity": "low",
+      "description": "The X-Content-Type-Options security header is not configured",
+      "url": "https://pranascience.com/"
+    },
+    {
+      "name": "Missing Referrer Policy Header",
+      "severity": "low",
+      "description": "The Referrer-Policy security header is not configured",
+      "url": "https://pranascience.com/"
+    },
+    {
+      "name": "Server Information Disclosure",
+      "severity": "low",
+      "description": "Server header reveals: cloudflare",
+      "url": "https://pranascience.com/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "multi-scanner-microservice",
+  "version": "2.0.0",
+  "description": "Multi-scanner security testing microservice with ZAP, reNgine, Wapiti, Nikto, and w3af",
+  "main": "index.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs",
+    "dev": "node --watch index.mjs",
+    "test": "node test.mjs",
+    "health": "curl http://localhost:3000/health"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "@supabase/supabase-js": "^2.38.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["security", "scanner", "zap", "rengine", "wapiti", "nikto", "w3af"],
+  "author": "ThreatVisor Security Platform",
+  "license": "MIT"
+}
