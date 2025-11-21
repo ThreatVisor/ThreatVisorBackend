@@ -131,8 +131,8 @@ async function processAllVulnerabilitiesWithAI(allVulnerabilities, scanMetadata,
   console.log('🤖 AI PROCESSING STARTING - ENHANCED LOGGING');
   console.log('='.repeat(80));
 
-  // REDUCED BATCH SIZE to prevent token limit truncation
-  const BATCH_SIZE = 3;
+  // REDUCED BATCH SIZE to 1 to absolutely minimize token usage and prevent truncation
+  const BATCH_SIZE = 1;
   const batches = [];
   for (let i = 0; i < allVulnerabilities.length; i += BATCH_SIZE) {
     batches.push(allVulnerabilities.slice(i, i + BATCH_SIZE));
@@ -305,6 +305,7 @@ Return ONLY valid JSON with no additional text or comments.`;
         parsedResponse = JSON.parse(aiResponse);
       } catch (parseError) {
         console.warn(`⚠️ Batch ${batchIndex + 1} JSON parse failed, attempting repair...`);
+        console.log('🔍 RAW AI RESPONSE (FAILED):', aiResponse); // ADDED LOGGING
 
         // JSON REPAIR LOGIC
         try {
