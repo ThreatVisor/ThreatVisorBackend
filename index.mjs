@@ -430,6 +430,7 @@ try {
   console.error('❌ AI processing failed with error:', error);
   throw error;
 }
+}
 
 
 function assessExploitDifficulty(vuln, similarVulns) {
