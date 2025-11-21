@@ -1,6 +1,7 @@
 // ~/multi-scanner-microservice/index.mjs
 // COMPLETE UNIFIED AI MULTI-SCANNER with Enhanced Logging and Fixed Processing
 import express from 'express';
+import 'dotenv/config';
 import { exec } from 'child_process';
 import fs from 'fs';
 import path from 'path';
@@ -153,7 +154,7 @@ ${businessContext}
 **TOTAL RAW FINDINGS:** ${allVulnerabilities.length}
 
 **SAMPLE VULNERABILITY DATA:**
-${JSON.stringify(allVulnerabilities.slice(0, 3).map(v => ({
+${JSON.stringify(allVulnerabilities.map(v => ({
     scanner: v.scanner,
     title: v.title,
     severity: v.severity,
@@ -254,577 +255,182 @@ Process all ${allVulnerabilities.length} vulnerabilities and return detailed ana
 
 Return ONLY valid JSON with no additional text or comments.`;
 
-  if (!ANTHROPIC_API_KEY) {
-    console.log('❌ Anthropic API key not configured, using enhanced fallback processing');
-    return processFallbackVulnerabilities(allVulnerabilities);
-  }
+  console.error('❌ Anthropic API key not configured - cannot proceed with AI analysis');
+  throw new Error('ANTHROPIC_API_KEY not configured');
+}
+
+try {
+  console.log(`🔑 Using Anthropic model: ${ANTHROPIC_MODEL}`);
+  console.log(`📊 Processing ${allVulnerabilities.length} vulnerabilities`);
+  console.log(`🎯 Target: ${target}`);
+
+  const anthropic = new Anthropic({
+    apiKey: ANTHROPIC_API_KEY,
+  });
+
+  const systemPrompt = "You are a senior cybersecurity analyst with 15+ years experience. Generate UNIQUE, detailed content for each vulnerability field. Never repeat the same text across multiple fields. Always provide EXACTLY 5 specific remediation steps with actual commands and configurations. Focus on realistic, actionable security intelligence.";
+
+  const msg = await anthropic.messages.create({
+    model: ANTHROPIC_MODEL,
+    max_tokens: 4000,
+    temperature: 0.3,
+    system: systemPrompt,
+    messages: [
+      {
+        role: "user",
+        content: prompt
+      }
+    ]
+  });
+
+  const aiResponse = msg.content[0].text.trim();
+
+  console.log('✅ AI response received successfully');
+  console.log(`📏 AI response length: ${aiResponse.length} characters`);
+  console.log('📝 AI response preview (first 300 chars):');
+  console.log(aiResponse.substring(0, 300) + '...');
 
   try {
-    console.log(`🔑 Using Anthropic model: ${ANTHROPIC_MODEL}`);
-    console.log(`📊 Processing ${allVulnerabilities.length} vulnerabilities`);
-    console.log(`🎯 Target: ${target}`);
+    const parsedResponse = JSON.parse(aiResponse);
 
-    const anthropic = new Anthropic({
-      apiKey: ANTHROPIC_API_KEY,
-    });
+    // ENHANCED LOGGING - Show exactly what AI generated
+    console.log('\n' + '🎯 AI ANALYSIS COMPLETE - DETAILED RESULTS:');
+    console.log('='.repeat(60));
+    console.log(`📊 Unique vulnerabilities: ${parsedResponse.vulnerabilities?.length || 0}`);
+    console.log(`🔗 Duplicates merged: ${parsedResponse.summary?.duplicates_merged || 0}`);
+    console.log(`⚠️  Overall risk: ${parsedResponse.summary?.overall_risk_assessment || 'Unknown'}`);
 
-    const systemPrompt = "You are a senior cybersecurity analyst with 15+ years experience. Generate UNIQUE, detailed content for each vulnerability field. Never repeat the same text across multiple fields. Always provide EXACTLY 5 specific remediation steps with actual commands and configurations. Focus on realistic, actionable security intelligence.";
+    if (parsedResponse.vulnerabilities && parsedResponse.vulnerabilities.length > 0) {
+      console.log('\n🔍 SAMPLE AI-GENERATED VULNERABILITY CONTENT:');
+      console.log('-'.repeat(60));
+      const sampleVuln = parsedResponse.vulnerabilities[0];
 
-    const msg = await anthropic.messages.create({
-      model: ANTHROPIC_MODEL,
-      max_tokens: 4000,
-      temperature: 0.3,
-      system: systemPrompt,
-      messages: [
-        {
-          role: "user",
-          content: prompt
-        }
-      ]
-    });
+      console.log(`📋 Title: ${sampleVuln.title}`);
+      console.log(`🔴 Severity: ${sampleVuln.severity}`);
+      console.log(`🎯 Scanners: ${sampleVuln.scanners_detected?.join(', ') || 'Unknown'}`);
 
-    const aiResponse = msg.content[0].text.trim();
+      console.log('\n📖 Main Description (first 200 chars):');
+      console.log((sampleVuln.main_description || 'None').substring(0, 200) + '...');
 
-    console.log('✅ AI response received successfully');
-    console.log(`📏 AI response length: ${aiResponse.length} characters`);
-    console.log('📝 AI response preview (first 300 chars):');
-    console.log(aiResponse.substring(0, 300) + '...');
+      console.log('\n🔍 AI Security Analysis (first 200 chars):');
+      console.log((sampleVuln.ai_security_analysis || 'None').substring(0, 200) + '...');
 
-    try {
-      const parsedResponse = JSON.parse(aiResponse);
+      console.log('\n💼 Business Impact (first 200 chars):');
+      console.log((sampleVuln.business_impact || 'None').substring(0, 200) + '...');
 
-      // ENHANCED LOGGING - Show exactly what AI generated
-      console.log('\n' + '🎯 AI ANALYSIS COMPLETE - DETAILED RESULTS:');
-      console.log('='.repeat(60));
-      console.log(`📊 Unique vulnerabilities: ${parsedResponse.vulnerabilities?.length || 0}`);
-      console.log(`🔗 Duplicates merged: ${parsedResponse.summary?.duplicates_merged || 0}`);
-      console.log(`⚠️  Overall risk: ${parsedResponse.summary?.overall_risk_assessment || 'Unknown'}`);
-
-      if (parsedResponse.vulnerabilities && parsedResponse.vulnerabilities.length > 0) {
-        console.log('\n🔍 SAMPLE AI-GENERATED VULNERABILITY CONTENT:');
-        console.log('-'.repeat(60));
-        const sampleVuln = parsedResponse.vulnerabilities[0];
-
-        console.log(`📋 Title: ${sampleVuln.title}`);
-        console.log(`🔴 Severity: ${sampleVuln.severity}`);
-        console.log(`🎯 Scanners: ${sampleVuln.scanners_detected?.join(', ') || 'Unknown'}`);
-
-        console.log('\n📖 Main Description (first 200 chars):');
-        console.log((sampleVuln.main_description || 'None').substring(0, 200) + '...');
-
-        console.log('\n🔍 AI Security Analysis (first 200 chars):');
-        console.log((sampleVuln.ai_security_analysis || 'None').substring(0, 200) + '...');
-
-        console.log('\n💼 Business Impact (first 200 chars):');
-        console.log((sampleVuln.business_impact || 'None').substring(0, 200) + '...');
-
-        console.log('\n⚡ Attack Scenarios:');
-        if (sampleVuln.attack_scenarios && Array.isArray(sampleVuln.attack_scenarios)) {
-          sampleVuln.attack_scenarios.forEach((scenario, i) => {
-            console.log(`  ${i + 1}. ${scenario.substring(0, 150)}...`);
-          });
-        } else {
-          console.log('  ❌ No attack scenarios generated');
-        }
-
-        console.log('\n🏢 Enterprise Metrics:');
-        console.log(`  - CVSS: ${sampleVuln.cvss_vector || 'N/A'} (${sampleVuln.cvss_score || 0})`);
-        console.log(`  - False Positive Risk: ${sampleVuln.false_positive_likelihood || 'Unknown'}`);
-        console.log(`  - Compliance: ${sampleVuln.compliance_controls?.join(', ') || 'None'}`);
-
-
-        console.log('\n🔧 Remediation Steps:');
-        if (sampleVuln.detailed_remediation_steps && Array.isArray(sampleVuln.detailed_remediation_steps)) {
-          sampleVuln.detailed_remediation_steps.forEach((step, i) => {
-            console.log(`  ${i + 1}. ${step.substring(0, 100)}...`);
-          });
-        } else {
-          console.log('  ❌ No remediation steps generated');
-        }
-
-        console.log('\n🎯 CONTENT UNIQUENESS CHECK:');
-        const contents = [
-          sampleVuln.main_description,
-          sampleVuln.ai_security_analysis,
-          sampleVuln.business_impact,
-          sampleVuln.technical_impact
-        ];
-        const isUnique = new Set(contents).size === contents.filter(Boolean).length;
-        console.log(`✅ Content uniqueness: ${isUnique ? 'PASSED' : 'FAILED'}`);
+      console.log('\n⚡ Attack Scenarios:');
+      if (sampleVuln.attack_scenarios && Array.isArray(sampleVuln.attack_scenarios)) {
+        sampleVuln.attack_scenarios.forEach((scenario, i) => {
+          console.log(`  ${i + 1}. ${scenario.substring(0, 150)}...`);
+        });
+      } else {
+        console.log('  ❌ No attack scenarios generated');
       }
 
-      // Transform AI response to expected format
-      const transformedResponse = {
-        summary: {
-          total_unique_vulnerabilities: parsedResponse.vulnerabilities?.length || 0,
-          critical_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'critical').length || 0,
-          high_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'high').length || 0,
-          medium_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'medium').length || 0,
-          low_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'low').length || 0,
-          info_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'info').length || 0,
-          duplicates_merged: parsedResponse.summary?.duplicates_merged || (allVulnerabilities.length - (parsedResponse.vulnerabilities?.length || 0)),
-          overall_risk_assessment: parsedResponse.summary?.overall_risk_assessment || "High - Detailed AI analysis completed"
-        },
-        vulnerabilities: (parsedResponse.vulnerabilities || []).map((v, index) => ({
-          id: `ai_vuln_${index + 1}`,
-          title: v.title,
-          severity: v.severity || 'medium',
-          confidence: 'high',
-          category: categorizeVulnerability(v.title),
-          cwe_id: null,
-          wasc_id: null,
-          scanners_detected: v.scanners_detected || ['unknown'],
-          urls_affected: [target],
-          main_description: v.main_description,
-          ai_security_analysis: v.ai_security_analysis,
-          business_impact: v.business_impact,
-          technical_impact: v.technical_impact,
-          solution_summary: v.detailed_remediation_steps?.[0]?.substring(0, 100) + '...' || 'Implement security controls',
-          detailed_remediation_steps: v.detailed_remediation_steps || [],
-          attack_scenarios: v.attack_scenarios || [],
-          prevention_practices: [
-            "Implement comprehensive security testing in development pipeline",
-            "Regular security assessments and penetration testing",
-            "Security awareness training for development teams",
-            "Automated security monitoring and alerting"
-          ],
-          compliance_considerations: `This ${v.severity} vulnerability may impact compliance with OWASP Top 10, PCI DSS, GDPR, and other security frameworks. Immediate remediation recommended for regulatory compliance.`,
-          exploit_difficulty: v.exploit_difficulty || 'moderate',
-          remediation_priority: v.severity === 'critical' ? 'critical' : v.severity === 'high' ? 'high' : 'medium',
-          impact_score: v.impact_score || calculateImpactScore(v.severity, v.exploit_difficulty),
-          references: [
-            "https://owasp.org/www-project-top-ten/",
-            "https://cheatsheetseries.owasp.org/",
-            "https://cwe.mitre.org/"
-          ],
-          evidence: {
-            scanner_outputs: v.scanners_detected?.reduce((acc, scanner) => {
-              acc[scanner] = `${scanner} detected: ${v.title}`;
-              return acc;
-            }, {}) || {},
-            correlation_notes: `Found by ${v.scanners_detected?.length || 1} scanner(s): ${v.scanners_detected?.join(', ') || 'unknown'}. AI-generated comprehensive analysis with detailed exploit scenarios and specific remediation guidance.`
-          },
-          // Enterprise Fields
-          cvss_vector: v.cvss_vector,
-          cvss_score: v.cvss_score,
-          false_positive_likelihood: v.false_positive_likelihood,
-          false_positive_reasoning: v.false_positive_reasoning,
-          compliance_controls: v.compliance_controls
-        })),
-        scanner_performance: calculateScannerPerformance(allVulnerabilities)
-      };
+      console.log('\n🏢 Enterprise Metrics:');
+      console.log(`  - CVSS: ${sampleVuln.cvss_vector || 'N/A'} (${sampleVuln.cvss_score || 0})`);
+      console.log(`  - False Positive Risk: ${sampleVuln.false_positive_likelihood || 'Unknown'}`);
+      console.log(`  - Compliance: ${sampleVuln.compliance_controls?.join(', ') || 'None'}`);
 
-      console.log('\n✅ AI PROCESSING COMPLETED SUCCESSFULLY');
-      console.log('='.repeat(80));
 
-      return transformedResponse;
+      console.log('\n🔧 Remediation Steps:');
+      if (sampleVuln.detailed_remediation_steps && Array.isArray(sampleVuln.detailed_remediation_steps)) {
+        sampleVuln.detailed_remediation_steps.forEach((step, i) => {
+          console.log(`  ${i + 1}. ${step.substring(0, 100)}...`);
+        });
+      } else {
+        console.log('  ❌ No remediation steps generated');
+      }
 
-    } catch (parseError) {
-      console.error('❌ Failed to parse AI JSON response:', parseError);
-      console.log('📝 Raw AI response that failed to parse:');
-      console.log(aiResponse.substring(0, 1000));
-      console.log('🔄 Using enhanced fallback processing...');
-      return processFallbackVulnerabilities(allVulnerabilities);
+      console.log('\n🎯 CONTENT UNIQUENESS CHECK:');
+      const contents = [
+        sampleVuln.main_description,
+        sampleVuln.ai_security_analysis,
+        sampleVuln.business_impact,
+        sampleVuln.technical_impact
+      ];
+      const isUnique = new Set(contents).size === contents.filter(Boolean).length;
+      console.log(`✅ Content uniqueness: ${isUnique ? 'PASSED' : 'FAILED'}`);
     }
 
-  } catch (error) {
-    console.error('❌ AI processing failed with error:', error);
-    console.log('🔄 Using enhanced fallback processing...');
-    return processFallbackVulnerabilities(allVulnerabilities);
-  }
-}
-
-// Enhanced fallback processing when AI is unavailable
-function processFallbackVulnerabilities(allVulnerabilities) {
-  console.log('\n' + '🔄 FALLBACK PROCESSING STARTED - ENHANCED LOGGING');
-  console.log('='.repeat(80));
-  console.log(`📊 Processing ${allVulnerabilities.length} vulnerabilities with enhanced fallback`);
-
-  // Simple deduplication based on title similarity
-  const uniqueVulns = [];
-  const processed = new Set();
-
-  for (const vuln of allVulnerabilities) {
-    const normalizedTitle = vuln.title.toLowerCase()
-      .replace(/\s+/g, ' ')
-      .replace(/[^\w\s]/g, '')
-      .trim();
-
-    if (!processed.has(normalizedTitle)) {
-      processed.add(normalizedTitle);
-
-      // Find all similar vulnerabilities
-      const similarVulns = allVulnerabilities.filter(v => {
-        const vNormalized = v.title.toLowerCase()
-          .replace(/\s+/g, ' ')
-          .replace(/[^\w\s]/g, '')
-          .trim();
-        return vNormalized === normalizedTitle;
-      });
-
-      console.log(`🔍 Processing: ${vuln.title}`);
-      console.log(`🔗 Scanners: ${[...new Set(similarVulns.map(v => v.scanner))].join(', ')}`);
-      console.log(`📍 URLs: ${[...new Set(similarVulns.map(v => v.url).filter(Boolean))].slice(0, 3).join(', ')}`);
-
-      const specificRemediationSteps = generateContextSpecificRemediationSteps(vuln, similarVulns);
-      const specificAttackScenarios = generateContextSpecificAttackScenarios(vuln, similarVulns);
-
-      console.log(`✅ Generated ${specificRemediationSteps.length} remediation steps`);
-      console.log(`⚡ Generated ${specificAttackScenarios.length} attack scenarios`);
-
-      const mergedVuln = {
-        id: `fallback_vuln_${uniqueVulns.length + 1}`,
-        title: vuln.title,
-        severity: vuln.severity,
-        confidence: vuln.confidence || 'medium',
-        category: categorizeVulnerability(vuln.title),
-        cwe_id: vuln.cwe_id,
-        wasc_id: vuln.wasc_id,
-        scanners_detected: [...new Set(similarVulns.map(v => v.scanner))],
-        urls_affected: [...new Set(similarVulns.map(v => v.url).filter(Boolean))],
-        main_description: generateContextSpecificDescription(vuln, similarVulns),
-        ai_security_analysis: generateContextSpecificSecurityAnalysis(vuln, similarVulns),
-        business_impact: generateContextSpecificBusinessImpact(vuln, similarVulns),
-        technical_impact: generateContextSpecificTechnicalImpact(vuln, similarVulns),
-        solution_summary: generateContextSpecificSolutionSummary(vuln, similarVulns),
-        detailed_remediation_steps: specificRemediationSteps,
-        attack_scenarios: specificAttackScenarios,
-        prevention_practices: generateContextSpecificPreventionPractices(vuln, similarVulns),
-        compliance_considerations: generateContextSpecificComplianceNotes(vuln, similarVulns),
-        exploit_difficulty: assessExploitDifficulty(vuln, similarVulns),
-        remediation_priority: calculateRemediationPriority(vuln.severity, 'moderate', 'medium'),
-        impact_score: calculateImpactScore(vuln.severity, 'moderate'),
-        references: generateContextSpecificReferences(vuln, similarVulns),
+    // Transform AI response to expected format
+    const transformedResponse = {
+      summary: {
+        total_unique_vulnerabilities: parsedResponse.vulnerabilities?.length || 0,
+        critical_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'critical').length || 0,
+        high_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'high').length || 0,
+        medium_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'medium').length || 0,
+        low_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'low').length || 0,
+        info_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'info').length || 0,
+        duplicates_merged: parsedResponse.summary?.duplicates_merged || (allVulnerabilities.length - (parsedResponse.vulnerabilities?.length || 0)),
+        overall_risk_assessment: parsedResponse.summary?.overall_risk_assessment || "High - Detailed AI analysis completed"
+      },
+      vulnerabilities: (parsedResponse.vulnerabilities || []).map((v, index) => ({
+        id: `ai_vuln_${index + 1}`,
+        title: v.title,
+        severity: v.severity || 'medium',
+        confidence: 'high',
+        category: categorizeVulnerability(v.title),
+        cwe_id: null,
+        wasc_id: null,
+        scanners_detected: v.scanners_detected || ['unknown'],
+        urls_affected: [target],
+        main_description: v.main_description,
+        ai_security_analysis: v.ai_security_analysis,
+        business_impact: v.business_impact,
+        technical_impact: v.technical_impact,
+        solution_summary: v.detailed_remediation_steps?.[0]?.substring(0, 100) + '...' || 'Implement security controls',
+        detailed_remediation_steps: v.detailed_remediation_steps || [],
+        attack_scenarios: v.attack_scenarios || [],
+        prevention_practices: [
+          "Implement comprehensive security testing in development pipeline",
+          "Regular security assessments and penetration testing",
+          "Security awareness training for development teams",
+          "Automated security monitoring and alerting"
+        ],
+        compliance_considerations: `This ${v.severity} vulnerability may impact compliance with OWASP Top 10, PCI DSS, GDPR, and other security frameworks. Immediate remediation recommended for regulatory compliance.`,
+        exploit_difficulty: v.exploit_difficulty || 'moderate',
+        remediation_priority: v.severity === 'critical' ? 'critical' : v.severity === 'high' ? 'high' : 'medium',
+        impact_score: v.impact_score || calculateImpactScore(v.severity, v.exploit_difficulty),
+        references: [
+          "https://owasp.org/www-project-top-ten/",
+          "https://cheatsheetseries.owasp.org/",
+          "https://cwe.mitre.org/"
+        ],
         evidence: {
-          scanner_outputs: similarVulns.reduce((acc, v) => {
-            acc[v.scanner] = v.description || v.title;
+          scanner_outputs: v.scanners_detected?.reduce((acc, scanner) => {
+            acc[scanner] = `${scanner} detected: ${v.title}`;
             return acc;
-          }, {}),
-          correlation_notes: `Found by ${similarVulns.length} scanner(s): ${similarVulns.map(v => v.scanner).join(', ')}. ${generateCorrelationInsights(similarVulns)}`
-        }
-      };
+          }, {}) || {},
+          correlation_notes: `Found by ${v.scanners_detected?.length || 1} scanner(s): ${v.scanners_detected?.join(', ') || 'unknown'}. AI-generated comprehensive analysis with detailed exploit scenarios and specific remediation guidance.`
+        },
+        // Enterprise Fields
+        cvss_vector: v.cvss_vector,
+        cvss_score: v.cvss_score,
+        false_positive_likelihood: v.false_positive_likelihood,
+        false_positive_reasoning: v.false_positive_reasoning,
+        compliance_controls: v.compliance_controls
+      })),
+      scanner_performance: calculateScannerPerformance(allVulnerabilities)
+    };
 
-      uniqueVulns.push(mergedVuln);
-    }
+    console.log('\n✅ AI PROCESSING COMPLETED SUCCESSFULLY');
+    console.log('='.repeat(80));
+
+    return transformedResponse;
+
+  } catch (parseError) {
+    console.error('❌ Failed to parse AI JSON response:', parseError);
+    console.log('📝 Raw AI response that failed to parse:');
+    console.log(aiResponse.substring(0, 1000));
+    throw new Error(`Failed to parse AI response: ${parseError.message}`);
   }
 
-  // Generate summary
-  const severityCounts = uniqueVulns.reduce((acc, v) => {
-    acc[v.severity] = (acc[v.severity] || 0) + 1;
-    return acc;
-  }, {});
-
-  console.log('\n✅ FALLBACK PROCESSING COMPLETE');
-  console.log(`📊 Generated ${uniqueVulns.length} unique vulnerabilities`);
-  console.log(`🔗 Merged ${allVulnerabilities.length - uniqueVulns.length} duplicates`);
-  console.log('='.repeat(80));
-
-  return {
-    summary: {
-      total_unique_vulnerabilities: uniqueVulns.length,
-      critical_count: severityCounts.critical || 0,
-      high_count: severityCounts.high || 0,
-      medium_count: severityCounts.medium || 0,
-      low_count: severityCounts.low || 0,
-      info_count: severityCounts.info || 0,
-      duplicates_merged: allVulnerabilities.length - uniqueVulns.length,
-      overall_risk_assessment: assessOverallRisk(severityCounts)
-    },
-    vulnerabilities: uniqueVulns,
-    scanner_performance: calculateScannerPerformance(allVulnerabilities)
-  };
+} catch (error) {
+  console.error('❌ AI processing failed with error:', error);
+  throw error;
 }
 
-// Helper functions for universal vulnerability processing
-function categorizeVulnerability(title) {
-  const categories = {
-    'security_headers': ['header', 'csp', 'hsts', 'frame-options', 'content-type-options', 'permissions', 'referrer'],
-    'injection': ['xss', 'sql injection', 'command injection', 'ldap injection', 'script injection', 'code injection'],
-    'authentication': ['csrf', 'session', 'authentication', 'authorization', 'login', 'credential'],
-    'information_disclosure': ['information disclosure', 'debug', 'error', 'path traversal', 'directory', 'version', 'banner'],
-    'configuration': ['server', 'configuration', 'misconfiguration', 'default', 'setup', 'install'],
-    'cryptography': ['ssl', 'tls', 'encryption', 'certificate', 'crypto', 'hash'],
-    'file_handling': ['upload', 'file', 'directory', 'path', 'traversal', 'inclusion'],
-    'access_control': ['access', 'permission', 'privilege', 'bypass', 'elevation'],
-    'business_logic': ['logic', 'workflow', 'process', 'validation', 'business'],
-    'dos': ['denial', 'dos', 'ddos', 'resource', 'exhaustion', 'timeout'],
-    'api': ['api', 'rest', 'json', 'xml', 'soap', 'graphql']
-  };
-
-  const titleLower = title.toLowerCase();
-  for (const [category, keywords] of Object.entries(categories)) {
-    if (keywords.some(keyword => titleLower.includes(keyword))) {
-      return category;
-    }
-  }
-  return 'other';
-}
-
-// Context-specific content generation functions
-function generateContextSpecificDescription(vuln, similarVulns) {
-  const affectedUrls = [...new Set(similarVulns.map(v => v.url).filter(Boolean))];
-  const scannerNames = [...new Set(similarVulns.map(v => v.scanner))];
-  const rawOutputs = similarVulns.map(v => v.raw_output || v.description || '').join(' ');
-
-  let baseDescription = vuln.description || `${vuln.title} security vulnerability identified`;
-
-  if (vuln.raw_output && vuln.raw_output.length > 50) {
-    const cleanRawOutput = vuln.raw_output.replace(/^\+\s*/, '').replace(/^GET\s+|^POST\s+|^HEAD\s+/, '').trim();
-    if (cleanRawOutput.length > baseDescription.length) {
-      baseDescription = `${vuln.title} identified through security analysis. Technical details: ${cleanRawOutput}`;
-    }
-  }
-
-  const urlContext = affectedUrls.length > 0 ? ` affecting ${affectedUrls.join(', ')}` : ' affecting the target application';
-  const scannerContext = ` This security finding was detected by ${scannerNames.join(' and ')} scanner${scannerNames.length > 1 ? 's' : ''}`;
-  const severityContext = ` and represents a ${vuln.severity} severity risk`;
-
-  return `${baseDescription}${urlContext}.${scannerContext}${severityContext}. The vulnerability requires security attention and proper remediation to maintain application security posture. ${rawOutputs.length > 100 ? 'Detailed scanner analysis provides comprehensive insights into the security implications and affected components.' : ''}`;
-}
-
-function generateContextSpecificSecurityAnalysis(vuln, similarVulns) {
-  const affectedUrls = [...new Set(similarVulns.map(v => v.url).filter(Boolean))];
-  const scannerDetails = similarVulns.map(v => `${v.scanner}: ${v.description || v.title}`).join('; ');
-
-  return `Security analysis of this ${vuln.severity} vulnerability reveals significant risk factors requiring immediate attention. The vulnerability was identified across ${affectedUrls.length || 'multiple'} endpoint${affectedUrls.length !== 1 ? 's' : ''} and exhibits characteristics that make it exploitable by attackers with ${vuln.severity === 'high' || vuln.severity === 'critical' ? 'basic to intermediate' : 'moderate to advanced'} skill levels. Scanner correlation analysis shows: ${scannerDetails}. The security implications include potential for ${vuln.severity === 'critical' ? 'complete application compromise, data exfiltration, and unauthorized administrative access' : vuln.severity === 'high' ? 'significant security bypass, sensitive data exposure, and elevated privilege exploitation' : vuln.severity === 'medium' ? 'security control bypass, information disclosure, and potential attack chain escalation' : 'security configuration weakness and potential reconnaissance value for attackers'}. Understanding these specific risk factors is crucial for prioritizing remediation efforts and implementing effective security controls.`;
-}
-
-function generateContextSpecificBusinessImpact(vuln, similarVulns) {
-  const affectedUrls = [...new Set(similarVulns.map(v => v.url).filter(Boolean))];
-  const urlContext = affectedUrls.length > 0 ? ` particularly affecting ${affectedUrls.slice(0, 3).join(', ')}${affectedUrls.length > 3 ? ' and other endpoints' : ''}` : '';
-
-  return `Business impact assessment for this ${vuln.severity} vulnerability${urlContext} indicates ${vuln.severity === 'critical' ? 'severe potential consequences including major data breaches, regulatory violations, significant financial losses, and permanent reputation damage. Executive leadership attention and emergency response protocols are required' : vuln.severity === 'high' ? 'substantial business risk including potential data exposure, compliance violations, customer trust erosion, financial impact, and competitive disadvantage. Urgent remediation with dedicated resources is necessary' : vuln.severity === 'medium' ? 'moderate business risk that could affect operational security, customer confidence, compliance posture, and business continuity. Should be addressed within current development sprint with allocated resources' : 'manageable business risk that contributes to overall security debt, potential compliance gaps, and gradual trust erosion. Include in next planned maintenance cycle with documented timeline'}. The specific nature of this vulnerability in the application context means ${vuln.severity === 'critical' || vuln.severity === 'high' ? 'immediate board-level reporting and emergency budget allocation may be required' : 'standard change management processes should be expedited'}. Financial impact assessment should consider potential regulatory fines, incident response costs, forensic investigation expenses, and long-term reputation recovery investments.`;
-}
-
-function generateContextSpecificTechnicalImpact(vuln, similarVulns) {
-  const scannerTechnicalDetails = similarVulns.map(v => `${v.scanner} detected: ${v.description || 'security configuration issue'}`).join('. ');
-  const affectedUrls = [...new Set(similarVulns.map(v => v.url).filter(Boolean))];
-
-  return `Technical impact analysis reveals that this vulnerability affects critical application infrastructure components and security controls. Detailed scanner analysis: ${scannerTechnicalDetails}. The vulnerability impacts ${affectedUrls.length > 0 ? `specific endpoints including ${affectedUrls.join(', ')}` : 'multiple application components'} and represents a ${vuln.severity} severity threat to system integrity. Technical systems at risk include ${vuln.title.toLowerCase().includes('header') ? 'web server configuration, reverse proxy settings, application security middleware, browser security controls, and client-side protection mechanisms' : vuln.title.toLowerCase().includes('injection') ? 'database systems, application logic, input validation mechanisms, data processing pipelines, and backend service integrations' : vuln.title.toLowerCase().includes('authentication') ? 'user authentication systems, session management, access control mechanisms, credential storage, and identity verification processes' : 'application security architecture, configuration management systems, security policy enforcement, and protective control implementations'}. Exploitation could lead to ${vuln.severity === 'critical' ? 'complete system compromise, unauthorized administrative access, data manipulation, and persistent attacker presence' : vuln.severity === 'high' ? 'significant security bypass, elevated privilege access, sensitive data exposure, and lateral movement opportunities' : vuln.severity === 'medium' ? 'security control circumvention, information leakage, and potential attack escalation vectors' : 'configuration weakness exposure and reconnaissance information disclosure'}. Technical remediation must address both immediate vulnerability patching and comprehensive security architecture improvements.`;
-}
-
-function generateContextSpecificSolutionSummary(vuln, similarVulns) {
-  const vulnTitle = vuln.title.toLowerCase();
-
-  if (vulnTitle.includes('sub resource integrity') || vulnTitle.includes('integrity attribute')) {
-    return `Implement Sub Resource Integrity (SRI) by adding integrity hashes to all external script and link tags. This requires generating SHA-384 hashes for external resources and adding integrity attributes with crossorigin='anonymous' to prevent resource tampering attacks.`;
-  } else if (vulnTitle.includes('strict-transport-security') || vulnTitle.includes('hsts')) {
-    return `Configure HTTP Strict Transport Security (HSTS) header to force HTTPS connections and prevent protocol downgrade attacks. Add 'Strict-Transport-Security: max-age=31536000; includeSubDomains' to all HTTPS responses.`;
-  } else if (vulnTitle.includes('content security policy') || vulnTitle.includes('csp')) {
-    return `Implement restrictive Content Security Policy to prevent XSS and code injection attacks. Start with 'default-src 'self'' policy and gradually expand with specific directives for legitimate resources.`;
-  } else if (vulnTitle.includes('x-content-type-options')) {
-    return `Add 'X-Content-Type-Options: nosniff' header to prevent MIME-sniffing attacks. Ensure all responses include accurate Content-Type headers that match the actual content being served.`;
-  } else if (vulnTitle.includes('x-frame-options') || vulnTitle.includes('clickjacking')) {
-    return `Configure 'X-Frame-Options: DENY' header to prevent clickjacking attacks. Use SAMEORIGIN only if legitimate iframe functionality is required for application features.`;
-  } else if (vulnTitle.includes('directory') && (vulnTitle.includes('indexing') || vulnTitle.includes('listing'))) {
-    return `Disable directory indexing by configuring web server to prevent automatic file listing. Add 'Options -Indexes' (Apache) or 'autoindex off' (Nginx) and implement proper index files.`;
-  } else if (vulnTitle.includes('debug') || vulnTitle.includes('information disclosure')) {
-    return `Disable debug mode and verbose error reporting in production environment. Remove debug files and configure generic error pages to prevent information disclosure.`;
-  } else if (vulnTitle.includes('outdated') || vulnTitle.includes('version')) {
-    return `Update server software to latest version and suppress version information disclosure. Configure web server to hide detailed version information in headers and error pages.`;
-  } else {
-    return `Address this ${vuln.severity} vulnerability through targeted security controls and configuration changes. Implement appropriate remediation based on vulnerability-specific requirements.`;
-  }
-}
-
-function generateContextSpecificRemediationSteps(vuln, similarVulns) {
-  const vulnTitle = vuln.title.toLowerCase();
-
-  // Generate EXACTLY 5 vulnerability-specific remediation steps
-  if (vulnTitle.includes('sub resource integrity') || vulnTitle.includes('integrity attribute')) {
-    return [
-      `Audit all external script and link tags in application code, templates, and HTML files to identify resources loading from external domains`,
-      `Generate SHA-384 integrity hashes for each external resource using: 'openssl dgst -sha384 -binary resource.js | openssl base64 -A'`,
-      `Add integrity='sha384-[generated-hash]' and crossorigin='anonymous' attributes to all external script and link tags`,
-      `Test resource loading with integrity checks in staging environment, verify no resources fail to load due to hash mismatches`,
-      `Deploy SRI-protected templates to production and implement monitoring for CSP violations indicating SRI failures`
-    ];
-  } else if (vulnTitle.includes('strict-transport-security') || vulnTitle.includes('hsts')) {
-    return [
-      `Configure web server to add 'Strict-Transport-Security: max-age=31536000; includeSubDomains' header to all HTTPS responses`,
-      `Ensure HSTS header is never sent over HTTP connections to prevent potential security bypass attacks`,
-      `Start with shorter max-age value (86400 seconds) for initial testing, gradually increase to full year after validation`,
-      `Test HSTS enforcement using browser developer tools and verify forced HTTPS redirects work correctly`,
-      `Consider submitting domain to HSTS preload list at hstspreload.org for maximum protection against protocol downgrade attacks`
-    ];
-  } else if (vulnTitle.includes('content security policy') || vulnTitle.includes('csp')) {
-    return [
-      `Audit application to catalog all legitimate script sources, style sources, and resource origins currently used`,
-      `Implement CSP header starting with restrictive policy: 'default-src 'self'; script-src 'self'; style-src 'self''`,
-      `Deploy CSP in report-only mode using 'Content-Security-Policy-Report-Only' header to collect violation reports`,
-      `Analyze CSP violation reports for 1-2 weeks, refine policy to allow legitimate resources while blocking unsafe practices`,
-      `Switch to enforcing CSP policy using 'Content-Security-Policy' header after thorough testing and violation analysis`
-    ];
-  } else if (vulnTitle.includes('x-content-type-options')) {
-    return [
-      `Configure web server to add 'X-Content-Type-Options: nosniff' header to all HTTP responses`,
-      `Review and ensure all Content-Type headers accurately reflect the actual content being served`,
-      `Pay special attention to user upload endpoints and file serving functionality to prevent MIME confusion attacks`,
-      `Test file upload and download functionality to verify browsers respect declared content types without MIME sniffing`,
-      `Implement automated testing in CI/CD pipeline to verify X-Content-Type-Options header presence on all endpoints`
-    ];
-  } else if (vulnTitle.includes('x-frame-options') || vulnTitle.includes('clickjacking')) {
-    return [
-      `Configure web server to add 'X-Frame-Options: DENY' header (or SAMEORIGIN if legitimate framing needed)`,
-      `Audit application to identify any legitimate iframe usage that requires SAMEORIGIN instead of DENY`,
-      `Test header implementation across all pages and endpoints to ensure consistent clickjacking protection`,
-      `Consider implementing additional 'Content-Security-Policy: frame-ancestors 'none'' header for modern browser support`,
-      `Validate protection using clickjacking testing tools and manual iframe embedding tests`
-    ];
-  } else if (vulnTitle.includes('directory') && (vulnTitle.includes('indexing') || vulnTitle.includes('listing'))) {
-    return [
-      `Configure web server to disable directory indexing by adding 'Options -Indexes' (Apache) or 'autoindex off' (Nginx)`,
-      `Review directory structure and move sensitive files outside web root or protect with proper access controls`,
-      `Implement default index files (index.html, index.php) in directories that must remain accessible`,
-      `Audit file permissions to ensure sensitive configuration files and directories are not web-accessible`,
-      `Test directory access attempts manually and with automated tools to verify indexing is properly disabled`
-    ];
-  } else if (vulnTitle.includes('debug') || vulnTitle.includes('information disclosure')) {
-    return [
-      `Disable debug mode and verbose error reporting in production environment configuration`,
-      `Remove or protect debug files, logs, and development artifacts from web-accessible directories`,
-      `Configure web server to return generic error pages instead of detailed system information`,
-      `Audit application code to remove debug print statements, console.log calls, and development comments`,
-      `Implement proper logging that captures necessary information without exposing sensitive data to users`
-    ];
-  } else if (vulnTitle.includes('outdated') || vulnTitle.includes('version')) {
-    return [
-      `Update server software to latest stable version and apply all security patches`,
-      `Configure web server to suppress detailed version information in HTTP headers and error pages`,
-      `Implement regular update schedule and vulnerability monitoring for all system components`,
-      `Remove or customize server banner information to prevent version disclosure`,
-      `Conduct regular security scanning to identify newly discovered vulnerabilities in current software versions`
-    ];
-  } else {
-    // Generic but targeted 5-step approach for unknown vulnerability types
-    const affectedUrls = [...new Set(similarVulns.map(v => v.url).filter(Boolean))];
-    return [
-      `Analyze the specific ${vuln.title} vulnerability affecting ${affectedUrls.length > 0 ? affectedUrls[0] : 'the application'} to understand root cause and impact`,
-      `Research current security best practices and recommended solutions specific to ${vuln.title} vulnerability type`,
-      `Implement appropriate security controls, configuration changes, or code modifications to address this specific vulnerability`,
-      `Test the implemented fix thoroughly in staging environment to ensure vulnerability is resolved without breaking functionality`,
-      `Deploy verified fix to production and establish monitoring to detect similar vulnerabilities in the future`
-    ];
-  }
-}
-
-function generateContextSpecificAttackScenarios(vuln, similarVulns) {
-  const affectedUrls = [...new Set(similarVulns.map(v => v.url).filter(Boolean))];
-  const urlContext = affectedUrls.length > 0 ? ` targeting ${affectedUrls[0]}${affectedUrls.length > 1 ? ' and other endpoints' : ''}` : '';
-  const vulnTitle = vuln.title.toLowerCase();
-
-  if (vulnTitle.includes('sub resource integrity') || vulnTitle.includes('integrity attribute')) {
-    return [
-      `CDN compromise attack: Attacker gains access to external CDN hosting JavaScript libraries → Injects malicious code into legitimate files (e.g., jquery.min.js) → User browsers load compromised scripts without integrity verification → Attacker executes arbitrary JavaScript to steal authentication tokens, form data, and session information`,
-      `Supply chain attack: Malicious actor compromises external CSS/JS resource provider → Modifies trusted resources to include cryptocurrency miners or data theft scripts → Applications loading these resources execute malicious code in user browsers → Sensitive data exfiltration occurs without user knowledge`,
-      `Man-in-the-middle attack: Attacker intercepts requests to external resources over compromised network → Serves malicious versions of JavaScript/CSS files instead of legitimate ones → Applications execute attacker-controlled code due to missing integrity verification → Complete application compromise and user data theft`
-    ];
-  } else if (vulnTitle.includes('strict-transport-security') || vulnTitle.includes('hsts')) {
-    return [
-      `SSL stripping attack: User connects to application via HTTP on public WiFi → Attacker performs man-in-the-middle attack and strips SSL/TLS encryption → Downgrades all connections to unencrypted HTTP → Intercepts and steals login credentials, session cookies, and sensitive form data transmitted in plaintext`,
-      `Protocol downgrade attack: Attacker on local network intercepts initial HTTP request → Prevents HTTPS redirect by blocking or modifying responses → Forces user to continue using insecure HTTP connection → Monitors and captures all application traffic including authentication tokens and personal data`,
-      `Session hijacking via WiFi: User accesses application on compromised public network → Attacker captures unencrypted HTTP traffic containing session cookies → Uses stolen session tokens to impersonate user and access their account → Performs unauthorized actions and steals sensitive account information`
-    ];
-  } else if (vulnTitle.includes('content security policy') || vulnTitle.includes('csp')) {
-    return [
-      `XSS payload injection: Attacker identifies input field vulnerable to XSS → Injects malicious JavaScript payload that executes due to missing CSP protection → Script accesses DOM, steals authentication cookies, and sends user data to attacker-controlled server → Complete account takeover and data theft`,
-      `Malicious resource loading: Attacker tricks application into loading external scripts from malicious domains → CSP absence allows unrestricted resource loading → Malicious scripts execute with full application privileges → Cryptocurrency mining, credential theft, and persistent backdoor installation`,
-      `Clickjacking and frame injection: Attacker embeds vulnerable application in malicious iframe → Overlays transparent elements to trick user interactions → Missing CSP frame-ancestors protection allows malicious framing → User unknowingly performs unauthorized actions like fund transfers or account changes`
-    ];
-  } else if (vulnTitle.includes('directory') && (vulnTitle.includes('indexing') || vulnTitle.includes('listing'))) {
-    return [
-      `Information reconnaissance: Attacker discovers directory indexing enabled → Browses file structure to map application architecture → Identifies sensitive files like configuration files, backups, and source code → Uses discovered information to plan more sophisticated attacks against specific vulnerabilities`,
-      `Sensitive file download: Attacker explores indexed directories to find exposed files → Downloads configuration files containing database credentials, API keys, and internal system information → Uses obtained credentials to access backend systems and databases → Escalates privileges and accesses sensitive customer data`,
-      `Backup file exploitation: Directory listing reveals backup files (.bak, .old, .backup) → Attacker downloads backup files containing older versions of application code → Analyzes backup files to discover previously patched vulnerabilities or hardcoded secrets → Exploits discovered weaknesses for system compromise`
-    ];
-  } else if (vulnTitle.includes('debug') || vulnTitle.includes('information disclosure')) {
-    return [
-      `Error message exploitation: Attacker triggers application errors to reveal debug information → Stack traces and error messages expose file paths, database schema, and internal system details → Uses disclosed information to craft targeted attacks against specific system components → Escalates attack using detailed system knowledge`,
-      `Debug file access: Attacker discovers exposed debug logs or files → Downloads debug information containing user sessions, internal API calls, and system configurations → Analyzes debug data to understand application logic and find security weaknesses → Exploits discovered vulnerabilities for unauthorized access`,
-      `System enumeration: Detailed error messages reveal technology stack, versions, and configurations → Attacker maps application architecture using disclosed information → Researches known vulnerabilities for identified software versions → Launches targeted exploits against specific system components`
-    ];
-  } else {
-    return [
-      `Vulnerability exploitation: Attacker identifies and exploits this ${vuln.severity} security weakness${urlContext} → Uses automated tools or manual techniques to leverage the vulnerability → Gains unauthorized access or extracts sensitive information from the application → Potentially escalates privileges or maintains persistent access for future attacks`,
-      `Attack chain development: Malicious actor combines this vulnerability with other security weaknesses → Creates multi-stage attack targeting application infrastructure → Uses initial compromise to discover additional vulnerabilities and expand access → Achieves complete system compromise through coordinated exploitation`,
-      `Persistent compromise: Successful exploitation leads to sustained unauthorized access to application systems → Attacker maintains hidden presence while collecting sensitive data over extended period → Establishes backdoors and lateral movement capabilities → Causes long-term damage through continuous data theft and system manipulation`
-    ];
-  }
-}
-
-function generateContextSpecificPreventionPractices(vuln, similarVulns) {
-  const scannerCount = [...new Set(similarVulns.map(v => v.scanner))].length;
-
-  const practices = [
-    `Implement comprehensive security scanning using multiple tools (currently ${scannerCount} scanner${scannerCount > 1 ? 's' : ''} detected this issue) as part of regular security assessment processes`,
-    `Establish security-first development practices with mandatory security reviews for all configuration changes and new feature implementations`,
-    `Deploy automated security testing in CI/CD pipeline to catch similar vulnerabilities before production deployment`,
-    `Conduct regular security training for development and operations teams focusing on secure configuration and common vulnerability prevention`
-  ];
-
-  if (vuln.title.toLowerCase().includes('header') || vuln.title.toLowerCase().includes('security')) {
-    practices.push(
-      `Implement security header management framework with standardized policies across all applications and regular compliance verification`,
-      `Establish security configuration templates and infrastructure-as-code practices to ensure consistent security implementations`,
-      `Deploy automated security header monitoring and alerting to detect configuration drift and policy violations`,
-      `Create security header testing procedures for all environment deployments and regular production validation`
-    );
-  } else if (vuln.title.toLowerCase().includes('injection')) {
-    practices.push(
-      `Implement comprehensive input validation and output encoding frameworks with centralized security controls`,
-      `Deploy web application firewalls (WAF) and intrusion detection systems to provide additional protection layers`,
-      `Establish secure coding standards with mandatory code review processes and static analysis security testing`,
-      `Create security-focused quality assurance procedures with dedicated penetration testing for high-risk components`
-    );
-  } else {
-    practices.push(
-      `Develop security configuration management procedures with version control and change tracking for all security-related settings`,
-      `Implement defense-in-depth security architecture with multiple overlapping security controls and monitoring systems`,
-      `Establish incident response procedures specifically addressing this vulnerability type and related security events`,
-      `Create ongoing security monitoring and threat intelligence integration to stay ahead of emerging attack techniques`
-    );
-  }
-
-  return practices;
-}
-
-function generateContextSpecificComplianceNotes(vuln, similarVulns) {
-  const affectedUrls = [...new Set(similarVulns.map(v => v.url).filter(Boolean))];
-
-  return `Compliance impact assessment indicates this ${vuln.severity} vulnerability${affectedUrls.length > 0 ? ` affecting ${affectedUrls.join(', ')}` : ''} may result in violations of multiple regulatory frameworks including OWASP Top 10 (security control failures), PCI DSS (cardholder data protection requirements), GDPR (data protection and privacy by design), SOX (internal control deficiencies), HIPAA (if health data is involved), and industry-specific security standards. Regulatory reporting requirements may be triggered if this vulnerability leads to data exposure or system compromise. Organizations should document remediation efforts, maintain audit trails of security improvements, and ensure compliance teams are notified of both the vulnerability and its resolution. The ${vuln.severity} severity level suggests ${vuln.severity === 'critical' || vuln.severity === 'high' ? 'immediate regulatory notification may be required depending on industry and jurisdiction' : 'standard compliance reporting processes should document this finding and remediation timeline'}. Regular compliance assessments should include verification that similar vulnerabilities are prevented through comprehensive security controls and monitoring systems.`;
-}
-
-function generateContextSpecificReferences(vuln, similarVulns) {
-  const references = ['https://owasp.org/www-project-top-ten/', 'https://cheatsheetseries.owasp.org/'];
-
-  if (vuln.title.toLowerCase().includes('content security policy') || vuln.title.toLowerCase().includes('csp')) {
-    references.push(
-      'https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP',
-      'https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html',
-      'https://csp-evaluator.withgoogle.com/'
-    );
-  } else if (vuln.title.toLowerCase().includes('x-frame-options') || vuln.title.toLowerCase().includes('clickjacking')) {
-    references.push(
-      'https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options',
-      'https://cheatsheetseries.owasp.org/cheatsheets/Clickjacking_Defense_Cheat_Sheet.html',
-      'https://owasp.org/www-community/attacks/Clickjacking'
-    );
-  } else if (vuln.title.toLowerCase().includes('strict-transport-security') || vuln.title.toLowerCase().includes('hsts')) {
-    references.push(
-      'https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security',
-      'https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Strict_Transport_Security_Cheat_Sheet.html',
-      'https://hstspreload.org/'
-    );
-  } else {
-    references.push(
-      'https://cwe.mitre.org/',
-      'https://www.nist.gov/cyberframework',
-      'https://owasp.org/www-project-secure-headers/'
-    );
-  }
-
-  return references;
-}
 
 function assessExploitDifficulty(vuln, similarVulns) {
   const scannerCount = [...new Set(similarVulns.map(v => v.scanner))].length;
