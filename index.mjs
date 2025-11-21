@@ -140,8 +140,14 @@ async function processAllVulnerabilitiesWithAI(allVulnerabilities, scanMetadata,
 
   console.log(`📦 Split ${allVulnerabilities.length} vulnerabilities into ${batches.length} batches of size ${BATCH_SIZE}`);
 
+  console.log('\n' + '='.repeat(80));
+  console.log('🏢 BUSINESS CONTEXT CONSTRUCTION FOR AI ANALYSIS');
+  console.log('='.repeat(80));
+  console.log(`📊 Company Profile Available: ${companyProfile ? 'YES' : 'NO'}`);
+  
   let businessContext = "";
   if (companyProfile) {
+    console.log('✅ Building business context string from company profile...');
     businessContext = `
 **BUSINESS CONTEXT:**
 - Company: ${companyProfile.company_name}
@@ -154,7 +160,17 @@ async function processAllVulnerabilitiesWithAI(allVulnerabilities, scanMetadata,
 
 Use this context to tailor the "Business Impact" and "Risk Assessment" specifically to this organization. For example, if they are in Healthcare (HIPAA) or Finance (PCI DSS), emphasize relevant compliance risks.
 `;
+    console.log('\n📋 CONSTRUCTED BUSINESS CONTEXT STRING:');
+    console.log('-'.repeat(60));
+    console.log(businessContext);
+    console.log('-'.repeat(60));
+    console.log(`📏 Business context length: ${businessContext.length} characters`);
+    console.log('✅ Business context will be included in AI prompts');
+  } else {
+    console.log('⚠️  No company profile available - AI analysis will proceed without business context');
+    console.log('   Business impact assessments will be generic');
   }
+  console.log('='.repeat(80) + '\n');
 
   if (!process.env.ANTHROPIC_API_KEY) {
     console.error('❌ Anthropic API key not configured - cannot proceed with AI analysis');
@@ -174,6 +190,13 @@ Use this context to tailor the "Business Impact" and "Risk Assessment" specifica
   for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
     const currentBatch = batches[batchIndex];
     console.log(`\n🔄 Processing Batch ${batchIndex + 1}/${batches.length} (${currentBatch.length} items)...`);
+    
+    // Log business context usage for this batch
+    if (businessContext) {
+      console.log(`🏢 Business context included in batch ${batchIndex + 1} prompt (${businessContext.length} chars)`);
+    } else {
+      console.log(`⚠️  No business context available for batch ${batchIndex + 1} - using generic analysis`);
+    }
 
     const prompt = `You are a senior cybersecurity analyst processing vulnerability findings. Provide SPECIFIC, DETAILED, and UNIQUE content.
 ${businessContext}
@@ -281,6 +304,20 @@ Process these ${currentBatch.length} vulnerabilities and return detailed analysi
 }
 
 Return ONLY valid JSON with no additional text or comments.`;
+
+    // Log prompt preview to verify business context inclusion
+    if (batchIndex === 0) { // Only log for first batch to avoid spam
+      console.log('\n📝 PROMPT PREVIEW (First 500 chars) - Verifying business context inclusion:');
+      console.log('-'.repeat(60));
+      const promptPreview = prompt.substring(0, 500);
+      console.log(promptPreview);
+      if (prompt.length > 500) {
+        console.log(`... (${prompt.length - 500} more characters)`);
+      }
+      console.log('-'.repeat(60));
+      console.log(`✅ Business context ${businessContext ? 'INCLUDED' : 'NOT INCLUDED'} in prompt`);
+      console.log(`📏 Total prompt length: ${prompt.length} characters\n`);
+    }
 
     try {
       const msg = await anthropic.messages.create({
@@ -1122,27 +1159,68 @@ app.post('/multi-scan', async (req, res) => {
   try {
     // Fetch company profile context
     let companyProfile = null;
+    console.log('\n' + '='.repeat(80));
+    console.log('🏢 BUSINESS CONTEXT FETCHING - START');
+    console.log('='.repeat(80));
+    console.log(`🔍 Looking up scan report ID: ${scanId}`);
+    
     try {
-      const { data: scanReport } = await supabase
+      const { data: scanReport, error: scanReportError } = await supabase
         .from('scan_reports')
         .select('company_profile_id')
         .eq('id', scanId)
         .single();
 
-      if (scanReport?.company_profile_id) {
-        const { data: profile } = await supabase
-          .from('company_profiles')
-          .select('*')
-          .eq('id', scanReport.company_profile_id)
-          .single();
-        companyProfile = profile;
-        if (companyProfile) {
-          console.log(`🏢 Loaded business context for: ${companyProfile.company_name} (${companyProfile.industry})`);
+      if (scanReportError) {
+        console.error('❌ Error fetching scan report:', scanReportError);
+        console.error('   Error details:', JSON.stringify(scanReportError, null, 2));
+      } else {
+        console.log('✅ Scan report fetched successfully');
+        console.log(`📋 Scan report data:`, JSON.stringify(scanReport, null, 2));
+        
+        if (scanReport?.company_profile_id) {
+          console.log(`\n🔗 Company profile ID found: ${scanReport.company_profile_id}`);
+          console.log(`📥 Fetching company profile from database...`);
+          
+          const { data: profile, error: profileError } = await supabase
+            .from('company_profiles')
+            .select('*')
+            .eq('id', scanReport.company_profile_id)
+            .single();
+          
+          if (profileError) {
+            console.error('❌ Error fetching company profile:', profileError);
+            console.error('   Error details:', JSON.stringify(profileError, null, 2));
+          } else if (profile) {
+            companyProfile = profile;
+            console.log('\n✅ COMPANY PROFILE LOADED SUCCESSFULLY:');
+            console.log('-'.repeat(60));
+            console.log(`   Company Name: ${companyProfile.company_name || 'N/A'}`);
+            console.log(`   Industry: ${companyProfile.industry || 'N/A'}`);
+            console.log(`   Website Purpose: ${companyProfile.website_purpose || 'N/A'}`);
+            console.log(`   Data Records Count: ${companyProfile.data_records_count || 'N/A'}`);
+            console.log(`   Downtime Cost/Hour: ${companyProfile.downtime_cost_per_hour ? '$' + companyProfile.downtime_cost_per_hour : 'N/A'}`);
+            console.log(`   Compliance Requirements: ${companyProfile.compliance_requirements?.join(', ') || 'None'}`);
+            console.log(`   Geographic Region: ${companyProfile.geographic_region || 'N/A'}`);
+            console.log('-'.repeat(60));
+            console.log(`📊 Full profile data:`, JSON.stringify(companyProfile, null, 2));
+          } else {
+            console.warn('⚠️ Company profile ID exists but profile not found in database');
+          }
+        } else {
+          console.log('ℹ️  No company_profile_id found in scan report - business context will not be used');
+          console.log('   This is normal if no company profile was associated with this scan');
         }
       }
     } catch (ctxError) {
-      console.warn('⚠️ Could not load business context:', ctxError.message);
+      console.error('❌ Exception while loading business context:', ctxError);
+      console.error('   Error message:', ctxError.message);
+      console.error('   Stack trace:', ctxError.stack);
     }
+    
+    console.log('='.repeat(80));
+    console.log(`🏢 BUSINESS CONTEXT STATUS: ${companyProfile ? 'LOADED' : 'NOT AVAILABLE'}`);
+    console.log('='.repeat(80) + '\n');
 
     await updateScanProgress(supabase, scanId, "running", 10, `Starting ${validScanners.length} scanner(s): ${validScanners.join(', ')}`);
 
