@@ -5,13 +5,15 @@ import { exec } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { createClient } from '@supabase/supabase-js';
+import Anthropic from '@anthropic-ai/sdk';
 
 const app = express();
 app.use(express.json());
 
 // Environment variables - with working API key fallback
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "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";
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4";
+// Environment variables - with working API key fallback
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929";
 
 const hostDir = path.resolve('.');
 const reportsDir = path.join(hostDir, 'reports');
@@ -66,9 +68,9 @@ const SCANNERS = {
 
 // Helper functions with safe type handling
 function mapZapRiskToSeverity(riskCode) {
-  switch(String(riskCode)) {
+  switch (String(riskCode)) {
     case "3": return "critical";
-    case "2": return "high"; 
+    case "2": return "high";
     case "1": return "medium";
     default: return "low";
   }
@@ -76,7 +78,7 @@ function mapZapRiskToSeverity(riskCode) {
 
 function mapWapitiLevelToSeverity(level) {
   const numLevel = parseInt(level) || 1;
-  switch(numLevel) {
+  switch (numLevel) {
     case 3: return "high";
     case 2: return "medium";
     case 1: return "low";
@@ -103,14 +105,14 @@ function extractCVEIds(reference = "") {
 
 function calculateRiskLevel(severity, confidence) {
   let baseRisk = 0;
-  switch(severity) {
+  switch (severity) {
     case 'critical': baseRisk = 10; break;
     case 'high': baseRisk = 8; break;
     case 'medium': baseRisk = 6; break;
     case 'low': baseRisk = 4; break;
     default: baseRisk = 2;
   }
-  
+
   const confidenceModifier = confidence === 'high' ? 0 : confidence === 'medium' ? -1 : -2;
   return Math.max(1, Math.min(10, baseRisk + confidenceModifier));
 }
@@ -123,26 +125,42 @@ function safeIntOrNull(value) {
 }
 
 // ENHANCED AI ANALYSIS FUNCTION - Generates detailed exploit scenarios and specific remediation
-async function processAllVulnerabilitiesWithAI(allVulnerabilities, scanMetadata, target) {
+async function processAllVulnerabilitiesWithAI(allVulnerabilities, scanMetadata, target, companyProfile = null) {
   console.log('\n' + '='.repeat(80));
   console.log('🤖 AI PROCESSING STARTING - ENHANCED LOGGING');
   console.log('='.repeat(80));
 
-  const prompt = `You are a senior cybersecurity analyst processing vulnerability findings from multiple security scanners. You must provide SPECIFIC, DETAILED, and UNIQUE content for each vulnerability - absolutely no generic responses.
+  let businessContext = "";
+  if (companyProfile) {
+    businessContext = `
+**BUSINESS CONTEXT:**
+- Company: ${companyProfile.company_name}
+- Industry: ${companyProfile.industry}
+- Type: ${companyProfile.website_purpose}
+- Data Sensitivity: ${companyProfile.data_records_count ? companyProfile.data_records_count + ' records' : 'Unknown'}
+- Downtime Cost: ${companyProfile.downtime_cost_per_hour ? '$' + companyProfile.downtime_cost_per_hour + '/hour' : 'Unknown'}
+- Compliance: ${companyProfile.compliance_requirements?.join(', ') || 'None'}
+- Region: ${companyProfile.geographic_region || 'Unknown'}
 
+Use this context to tailor the "Business Impact" and "Risk Assessment" specifically to this organization. For example, if they are in Healthcare (HIPAA) or Finance (PCI DSS), emphasize relevant compliance risks.
+`;
+  }
+
+  const prompt = `You are a senior cybersecurity analyst processing vulnerability findings from multiple security scanners. You must provide SPECIFIC, DETAILED, and UNIQUE content for each vulnerability - absolutely no generic responses.
+${businessContext}
 **SCAN TARGET:** ${target}
 **SCANNERS USED:** ${scanMetadata.scanners_used.join(', ')}
 **TOTAL RAW FINDINGS:** ${allVulnerabilities.length}
 
 **SAMPLE VULNERABILITY DATA:**
 ${JSON.stringify(allVulnerabilities.slice(0, 3).map(v => ({
-  scanner: v.scanner,
-  title: v.title,
-  severity: v.severity,
-  description: v.description,
-  url: v.url,
-  raw_output: v.raw_output ? v.raw_output.substring(0, 200) + '...' : 'N/A'
-})), null, 2)}
+    scanner: v.scanner,
+    title: v.title,
+    severity: v.severity,
+    description: v.description,
+    url: v.url,
+    raw_output: v.raw_output ? v.raw_output.substring(0, 200) + '...' : 'N/A'
+  })), null, 2)}
 
 **CRITICAL REQUIREMENTS:**
 
@@ -150,9 +168,10 @@ ${JSON.stringify(allVulnerabilities.slice(0, 3).map(v => ({
 
 2. **DETAILED EXPLOIT SCENARIOS**: Provide step-by-step attack methods showing EXACTLY how an attacker would exploit each specific vulnerability with realistic technical details.
 
-3. **EXACTLY 5 TARGETED REMEDIATION STEPS**: Each step must be vulnerability-specific with actual commands, file paths, configuration values, and implementation details.
-
-4. **VULNERABILITY-SPECIFIC ANALYSIS**: Tailor all content to the exact vulnerability type and affected target.
+5. **ENTERPRISE RISK METRICS**:
+   - **CVSS v3.1 Vector**: Generate a precise CVSS v3.1 vector string (e.g., CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H) based on the technical analysis.
+   - **False Positive Assessment**: Analyze the likelihood of this being a false positive (Low/Medium/High) with specific technical reasoning.
+   - **Compliance Mapping**: Map this vulnerability to specific controls in the company's required frameworks (e.g., "PCI DSS Requirement 6.5.1", "HIPAA §164.306(a)(1)").
 
 **EXAMPLE OUTPUT FORMAT:**
 
@@ -160,8 +179,17 @@ For a "Missing Content Security Policy" vulnerability:
 
 {
   "title": "Missing Content Security Policy",
-  "main_description": "Content Security Policy (CSP) header is not implemented on ${target}, leaving the application vulnerable to cross-site scripting (XSS) attacks, clickjacking, and malicious resource injection. This security control is essential for preventing unauthorized script execution.",
-  "ai_security_analysis": "Security analysis reveals this represents a critical gap in the application's browser security posture. Without CSP protection, attackers can inject arbitrary JavaScript, load malicious external resources, and perform data exfiltration. The vulnerability affects all user interactions and creates multiple attack vectors for session hijacking and credential theft.",
+  "main_description": "Content Security Policy (CSP) header is not implemented on ${target}, leaving the application vulnerable to cross-site scripting (XSS) attacks...",
+  "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
+  "cvss_score": 6.1,
+  "false_positive_likelihood": "Low",
+  "false_positive_reasoning": "Scanner confirmed missing header in HTTP response. Manual verification via curl confirms absence.",
+  "compliance_controls": [
+    "PCI DSS 4.0 Requirement 6.4.1: Defense against XSS",
+    "SOC 2 CC6.1: Logical Access Security",
+    "HIPAA §164.312(c)(1): Integrity Controls"
+  ],
+  "ai_security_analysis": "Security analysis reveals this represents a critical gap...",
   "business_impact": "Business impact includes potential data breaches affecting customer information, regulatory compliance violations under GDPR/PCI DSS, financial losses from fraudulent transactions, reputation damage, and legal liability. Customer trust erosion could result in 15-25% user base reduction.",
   "technical_impact": "Technical systems affected include web application security controls, browser-based protections, client-side data integrity, and user session management. All user-facing pages are vulnerable to script injection attacks, potentially compromising authentication systems and data processing.",
   "attack_scenarios": [
@@ -214,56 +242,49 @@ Process all ${allVulnerabilities.length} vulnerabilities and return detailed ana
       "scanners_detected": ["scanner1", "scanner2"],
       "severity": "critical|high|medium|low",
       "exploit_difficulty": "trivial|easy|moderate|difficult",
-      "impact_score": 1-10
+      "impact_score": 1-10,
+      "cvss_vector": "string",
+      "cvss_score": number,
+      "false_positive_likelihood": "Low|Medium|High",
+      "false_positive_reasoning": "string",
+      "compliance_controls": ["string"]
     }
   ]
 }
 
 Return ONLY valid JSON with no additional text or comments.`;
 
-  if (!OPENAI_API_KEY || OPENAI_API_KEY.includes('your_ope')) {
-    console.log('❌ OpenAI API key not configured, using enhanced fallback processing');
+  if (!ANTHROPIC_API_KEY) {
+    console.log('❌ Anthropic API key not configured, using enhanced fallback processing');
     return processFallbackVulnerabilities(allVulnerabilities);
   }
 
   try {
-    console.log(`🔑 Using OpenAI model: ${OPENAI_MODEL}`);
+    console.log(`🔑 Using Anthropic model: ${ANTHROPIC_MODEL}`);
     console.log(`📊 Processing ${allVulnerabilities.length} vulnerabilities`);
     console.log(`🎯 Target: ${target}`);
-    
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: OPENAI_MODEL,
-        messages: [
-          {
-            role: "system",
-            content: "You are a senior cybersecurity analyst with 15+ years experience. Generate UNIQUE, detailed content for each vulnerability field. Never repeat the same text across multiple fields. Always provide EXACTLY 5 specific remediation steps with actual commands and configurations. Focus on realistic, actionable security intelligence."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 4000 // Using standard parameter
-      })
+
+    const anthropic = new Anthropic({
+      apiKey: ANTHROPIC_API_KEY,
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ OpenAI API error (${response.status}):`, errorText);
-      console.log('🔄 Falling back to enhanced local processing...');
-      return processFallbackVulnerabilities(allVulnerabilities);
-    }
+    const systemPrompt = "You are a senior cybersecurity analyst with 15+ years experience. Generate UNIQUE, detailed content for each vulnerability field. Never repeat the same text across multiple fields. Always provide EXACTLY 5 specific remediation steps with actual commands and configurations. Focus on realistic, actionable security intelligence.";
 
-    const { choices } = await response.json();
-    const aiResponse = choices?.[0]?.message?.content?.trim() ?? "";
-    
+    const msg = await anthropic.messages.create({
+      model: ANTHROPIC_MODEL,
+      max_tokens: 4000,
+      temperature: 0.3,
+      system: systemPrompt,
+      messages: [
+        {
+          role: "user",
+          content: prompt
+        }
+      ]
+    });
+
+    const aiResponse = msg.content[0].text.trim();
+
     console.log('✅ AI response received successfully');
     console.log(`📏 AI response length: ${aiResponse.length} characters`);
     console.log('📝 AI response preview (first 300 chars):');
@@ -271,32 +292,32 @@ Return ONLY valid JSON with no additional text or comments.`;
 
     try {
       const parsedResponse = JSON.parse(aiResponse);
-      
+
       // ENHANCED LOGGING - Show exactly what AI generated
       console.log('\n' + '🎯 AI ANALYSIS COMPLETE - DETAILED RESULTS:');
       console.log('='.repeat(60));
       console.log(`📊 Unique vulnerabilities: ${parsedResponse.vulnerabilities?.length || 0}`);
       console.log(`🔗 Duplicates merged: ${parsedResponse.summary?.duplicates_merged || 0}`);
       console.log(`⚠️  Overall risk: ${parsedResponse.summary?.overall_risk_assessment || 'Unknown'}`);
-      
+
       if (parsedResponse.vulnerabilities && parsedResponse.vulnerabilities.length > 0) {
         console.log('\n🔍 SAMPLE AI-GENERATED VULNERABILITY CONTENT:');
         console.log('-'.repeat(60));
         const sampleVuln = parsedResponse.vulnerabilities[0];
-        
+
         console.log(`📋 Title: ${sampleVuln.title}`);
         console.log(`🔴 Severity: ${sampleVuln.severity}`);
         console.log(`🎯 Scanners: ${sampleVuln.scanners_detected?.join(', ') || 'Unknown'}`);
-        
+
         console.log('\n📖 Main Description (first 200 chars):');
         console.log((sampleVuln.main_description || 'None').substring(0, 200) + '...');
-        
+
         console.log('\n🔍 AI Security Analysis (first 200 chars):');
         console.log((sampleVuln.ai_security_analysis || 'None').substring(0, 200) + '...');
-        
+
         console.log('\n💼 Business Impact (first 200 chars):');
         console.log((sampleVuln.business_impact || 'None').substring(0, 200) + '...');
-        
+
         console.log('\n⚡ Attack Scenarios:');
         if (sampleVuln.attack_scenarios && Array.isArray(sampleVuln.attack_scenarios)) {
           sampleVuln.attack_scenarios.forEach((scenario, i) => {
@@ -305,7 +326,13 @@ Return ONLY valid JSON with no additional text or comments.`;
         } else {
           console.log('  ❌ No attack scenarios generated');
         }
-        
+
+        console.log('\n🏢 Enterprise Metrics:');
+        console.log(`  - CVSS: ${sampleVuln.cvss_vector || 'N/A'} (${sampleVuln.cvss_score || 0})`);
+        console.log(`  - False Positive Risk: ${sampleVuln.false_positive_likelihood || 'Unknown'}`);
+        console.log(`  - Compliance: ${sampleVuln.compliance_controls?.join(', ') || 'None'}`);
+
+
         console.log('\n🔧 Remediation Steps:');
         if (sampleVuln.detailed_remediation_steps && Array.isArray(sampleVuln.detailed_remediation_steps)) {
           sampleVuln.detailed_remediation_steps.forEach((step, i) => {
@@ -314,7 +341,7 @@ Return ONLY valid JSON with no additional text or comments.`;
         } else {
           console.log('  ❌ No remediation steps generated');
         }
-        
+
         console.log('\n🎯 CONTENT UNIQUENESS CHECK:');
         const contents = [
           sampleVuln.main_description,
@@ -325,7 +352,7 @@ Return ONLY valid JSON with no additional text or comments.`;
         const isUnique = new Set(contents).size === contents.filter(Boolean).length;
         console.log(`✅ Content uniqueness: ${isUnique ? 'PASSED' : 'FAILED'}`);
       }
-      
+
       // Transform AI response to expected format
       const transformedResponse = {
         summary: {
@@ -376,16 +403,22 @@ Return ONLY valid JSON with no additional text or comments.`;
               return acc;
             }, {}) || {},
             correlation_notes: `Found by ${v.scanners_detected?.length || 1} scanner(s): ${v.scanners_detected?.join(', ') || 'unknown'}. AI-generated comprehensive analysis with detailed exploit scenarios and specific remediation guidance.`
-          }
+          },
+          // Enterprise Fields
+          cvss_vector: v.cvss_vector,
+          cvss_score: v.cvss_score,
+          false_positive_likelihood: v.false_positive_likelihood,
+          false_positive_reasoning: v.false_positive_reasoning,
+          compliance_controls: v.compliance_controls
         })),
         scanner_performance: calculateScannerPerformance(allVulnerabilities)
       };
-      
+
       console.log('\n✅ AI PROCESSING COMPLETED SUCCESSFULLY');
       console.log('='.repeat(80));
-      
+
       return transformedResponse;
-      
+
     } catch (parseError) {
       console.error('❌ Failed to parse AI JSON response:', parseError);
       console.log('📝 Raw AI response that failed to parse:');
@@ -406,7 +439,7 @@ function processFallbackVulnerabilities(allVulnerabilities) {
   console.log('\n' + '🔄 FALLBACK PROCESSING STARTED - ENHANCED LOGGING');
   console.log('='.repeat(80));
   console.log(`📊 Processing ${allVulnerabilities.length} vulnerabilities with enhanced fallback`);
-  
+
   // Simple deduplication based on title similarity
   const uniqueVulns = [];
   const processed = new Set();
@@ -435,7 +468,7 @@ function processFallbackVulnerabilities(allVulnerabilities) {
 
       const specificRemediationSteps = generateContextSpecificRemediationSteps(vuln, similarVulns);
       const specificAttackScenarios = generateContextSpecificAttackScenarios(vuln, similarVulns);
-      
+
       console.log(`✅ Generated ${specificRemediationSteps.length} remediation steps`);
       console.log(`⚡ Generated ${specificAttackScenarios.length} attack scenarios`);
 
@@ -450,7 +483,7 @@ function processFallbackVulnerabilities(allVulnerabilities) {
         scanners_detected: [...new Set(similarVulns.map(v => v.scanner))],
         urls_affected: [...new Set(similarVulns.map(v => v.url).filter(Boolean))],
         main_description: generateContextSpecificDescription(vuln, similarVulns),
-        ai_security_analysis: generateContextSpecificSecurityAnalysis(vuln, similarVulns), 
+        ai_security_analysis: generateContextSpecificSecurityAnalysis(vuln, similarVulns),
         business_impact: generateContextSpecificBusinessImpact(vuln, similarVulns),
         technical_impact: generateContextSpecificTechnicalImpact(vuln, similarVulns),
         solution_summary: generateContextSpecificSolutionSummary(vuln, similarVulns),
@@ -532,47 +565,47 @@ function generateContextSpecificDescription(vuln, similarVulns) {
   const affectedUrls = [...new Set(similarVulns.map(v => v.url).filter(Boolean))];
   const scannerNames = [...new Set(similarVulns.map(v => v.scanner))];
   const rawOutputs = similarVulns.map(v => v.raw_output || v.description || '').join(' ');
-  
+
   let baseDescription = vuln.description || `${vuln.title} security vulnerability identified`;
-  
+
   if (vuln.raw_output && vuln.raw_output.length > 50) {
     const cleanRawOutput = vuln.raw_output.replace(/^\+\s*/, '').replace(/^GET\s+|^POST\s+|^HEAD\s+/, '').trim();
     if (cleanRawOutput.length > baseDescription.length) {
       baseDescription = `${vuln.title} identified through security analysis. Technical details: ${cleanRawOutput}`;
     }
   }
-  
+
   const urlContext = affectedUrls.length > 0 ? ` affecting ${affectedUrls.join(', ')}` : ' affecting the target application';
   const scannerContext = ` This security finding was detected by ${scannerNames.join(' and ')} scanner${scannerNames.length > 1 ? 's' : ''}`;
   const severityContext = ` and represents a ${vuln.severity} severity risk`;
-  
+
   return `${baseDescription}${urlContext}.${scannerContext}${severityContext}. The vulnerability requires security attention and proper remediation to maintain application security posture. ${rawOutputs.length > 100 ? 'Detailed scanner analysis provides comprehensive insights into the security implications and affected components.' : ''}`;
 }
 
 function generateContextSpecificSecurityAnalysis(vuln, similarVulns) {
   const affectedUrls = [...new Set(similarVulns.map(v => v.url).filter(Boolean))];
   const scannerDetails = similarVulns.map(v => `${v.scanner}: ${v.description || v.title}`).join('; ');
-  
+
   return `Security analysis of this ${vuln.severity} vulnerability reveals significant risk factors requiring immediate attention. The vulnerability was identified across ${affectedUrls.length || 'multiple'} endpoint${affectedUrls.length !== 1 ? 's' : ''} and exhibits characteristics that make it exploitable by attackers with ${vuln.severity === 'high' || vuln.severity === 'critical' ? 'basic to intermediate' : 'moderate to advanced'} skill levels. Scanner correlation analysis shows: ${scannerDetails}. The security implications include potential for ${vuln.severity === 'critical' ? 'complete application compromise, data exfiltration, and unauthorized administrative access' : vuln.severity === 'high' ? 'significant security bypass, sensitive data exposure, and elevated privilege exploitation' : vuln.severity === 'medium' ? 'security control bypass, information disclosure, and potential attack chain escalation' : 'security configuration weakness and potential reconnaissance value for attackers'}. Understanding these specific risk factors is crucial for prioritizing remediation efforts and implementing effective security controls.`;
 }
 
 function generateContextSpecificBusinessImpact(vuln, similarVulns) {
   const affectedUrls = [...new Set(similarVulns.map(v => v.url).filter(Boolean))];
   const urlContext = affectedUrls.length > 0 ? ` particularly affecting ${affectedUrls.slice(0, 3).join(', ')}${affectedUrls.length > 3 ? ' and other endpoints' : ''}` : '';
-  
+
   return `Business impact assessment for this ${vuln.severity} vulnerability${urlContext} indicates ${vuln.severity === 'critical' ? 'severe potential consequences including major data breaches, regulatory violations, significant financial losses, and permanent reputation damage. Executive leadership attention and emergency response protocols are required' : vuln.severity === 'high' ? 'substantial business risk including potential data exposure, compliance violations, customer trust erosion, financial impact, and competitive disadvantage. Urgent remediation with dedicated resources is necessary' : vuln.severity === 'medium' ? 'moderate business risk that could affect operational security, customer confidence, compliance posture, and business continuity. Should be addressed within current development sprint with allocated resources' : 'manageable business risk that contributes to overall security debt, potential compliance gaps, and gradual trust erosion. Include in next planned maintenance cycle with documented timeline'}. The specific nature of this vulnerability in the application context means ${vuln.severity === 'critical' || vuln.severity === 'high' ? 'immediate board-level reporting and emergency budget allocation may be required' : 'standard change management processes should be expedited'}. Financial impact assessment should consider potential regulatory fines, incident response costs, forensic investigation expenses, and long-term reputation recovery investments.`;
 }
 
 function generateContextSpecificTechnicalImpact(vuln, similarVulns) {
   const scannerTechnicalDetails = similarVulns.map(v => `${v.scanner} detected: ${v.description || 'security configuration issue'}`).join('. ');
   const affectedUrls = [...new Set(similarVulns.map(v => v.url).filter(Boolean))];
-  
+
   return `Technical impact analysis reveals that this vulnerability affects critical application infrastructure components and security controls. Detailed scanner analysis: ${scannerTechnicalDetails}. The vulnerability impacts ${affectedUrls.length > 0 ? `specific endpoints including ${affectedUrls.join(', ')}` : 'multiple application components'} and represents a ${vuln.severity} severity threat to system integrity. Technical systems at risk include ${vuln.title.toLowerCase().includes('header') ? 'web server configuration, reverse proxy settings, application security middleware, browser security controls, and client-side protection mechanisms' : vuln.title.toLowerCase().includes('injection') ? 'database systems, application logic, input validation mechanisms, data processing pipelines, and backend service integrations' : vuln.title.toLowerCase().includes('authentication') ? 'user authentication systems, session management, access control mechanisms, credential storage, and identity verification processes' : 'application security architecture, configuration management systems, security policy enforcement, and protective control implementations'}. Exploitation could lead to ${vuln.severity === 'critical' ? 'complete system compromise, unauthorized administrative access, data manipulation, and persistent attacker presence' : vuln.severity === 'high' ? 'significant security bypass, elevated privilege access, sensitive data exposure, and lateral movement opportunities' : vuln.severity === 'medium' ? 'security control circumvention, information leakage, and potential attack escalation vectors' : 'configuration weakness exposure and reconnaissance information disclosure'}. Technical remediation must address both immediate vulnerability patching and comprehensive security architecture improvements.`;
 }
 
 function generateContextSpecificSolutionSummary(vuln, similarVulns) {
   const vulnTitle = vuln.title.toLowerCase();
-  
+
   if (vulnTitle.includes('sub resource integrity') || vulnTitle.includes('integrity attribute')) {
     return `Implement Sub Resource Integrity (SRI) by adding integrity hashes to all external script and link tags. This requires generating SHA-384 hashes for external resources and adding integrity attributes with crossorigin='anonymous' to prevent resource tampering attacks.`;
   } else if (vulnTitle.includes('strict-transport-security') || vulnTitle.includes('hsts')) {
@@ -596,7 +629,7 @@ function generateContextSpecificSolutionSummary(vuln, similarVulns) {
 
 function generateContextSpecificRemediationSteps(vuln, similarVulns) {
   const vulnTitle = vuln.title.toLowerCase();
-  
+
   // Generate EXACTLY 5 vulnerability-specific remediation steps
   if (vulnTitle.includes('sub resource integrity') || vulnTitle.includes('integrity attribute')) {
     return [
@@ -679,7 +712,7 @@ function generateContextSpecificAttackScenarios(vuln, similarVulns) {
   const affectedUrls = [...new Set(similarVulns.map(v => v.url).filter(Boolean))];
   const urlContext = affectedUrls.length > 0 ? ` targeting ${affectedUrls[0]}${affectedUrls.length > 1 ? ' and other endpoints' : ''}` : '';
   const vulnTitle = vuln.title.toLowerCase();
-  
+
   if (vulnTitle.includes('sub resource integrity') || vulnTitle.includes('integrity attribute')) {
     return [
       `CDN compromise attack: Attacker gains access to external CDN hosting JavaScript libraries → Injects malicious code into legitimate files (e.g., jquery.min.js) → User browsers load compromised scripts without integrity verification → Attacker executes arbitrary JavaScript to steal authentication tokens, form data, and session information`,
@@ -721,7 +754,7 @@ function generateContextSpecificAttackScenarios(vuln, similarVulns) {
 
 function generateContextSpecificPreventionPractices(vuln, similarVulns) {
   const scannerCount = [...new Set(similarVulns.map(v => v.scanner))].length;
-  
+
   const practices = [
     `Implement comprehensive security scanning using multiple tools (currently ${scannerCount} scanner${scannerCount > 1 ? 's' : ''} detected this issue) as part of regular security assessment processes`,
     `Establish security-first development practices with mandatory security reviews for all configuration changes and new feature implementations`,
@@ -757,13 +790,13 @@ function generateContextSpecificPreventionPractices(vuln, similarVulns) {
 
 function generateContextSpecificComplianceNotes(vuln, similarVulns) {
   const affectedUrls = [...new Set(similarVulns.map(v => v.url).filter(Boolean))];
-  
+
   return `Compliance impact assessment indicates this ${vuln.severity} vulnerability${affectedUrls.length > 0 ? ` affecting ${affectedUrls.join(', ')}` : ''} may result in violations of multiple regulatory frameworks including OWASP Top 10 (security control failures), PCI DSS (cardholder data protection requirements), GDPR (data protection and privacy by design), SOX (internal control deficiencies), HIPAA (if health data is involved), and industry-specific security standards. Regulatory reporting requirements may be triggered if this vulnerability leads to data exposure or system compromise. Organizations should document remediation efforts, maintain audit trails of security improvements, and ensure compliance teams are notified of both the vulnerability and its resolution. The ${vuln.severity} severity level suggests ${vuln.severity === 'critical' || vuln.severity === 'high' ? 'immediate regulatory notification may be required depending on industry and jurisdiction' : 'standard compliance reporting processes should document this finding and remediation timeline'}. Regular compliance assessments should include verification that similar vulnerabilities are prevented through comprehensive security controls and monitoring systems.`;
 }
 
 function generateContextSpecificReferences(vuln, similarVulns) {
   const references = ['https://owasp.org/www-project-top-ten/', 'https://cheatsheetseries.owasp.org/'];
-  
+
   if (vuln.title.toLowerCase().includes('content security policy') || vuln.title.toLowerCase().includes('csp')) {
     references.push(
       'https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP',
@@ -789,13 +822,13 @@ function generateContextSpecificReferences(vuln, similarVulns) {
       'https://owasp.org/www-project-secure-headers/'
     );
   }
-  
+
   return references;
 }
 
 function assessExploitDifficulty(vuln, similarVulns) {
   const scannerCount = [...new Set(similarVulns.map(v => v.scanner))].length;
-  
+
   if (vuln.severity === 'critical') return scannerCount > 2 ? 'easy' : 'trivial';
   if (vuln.severity === 'high') return scannerCount > 2 ? 'moderate' : 'easy';
   if (vuln.severity === 'medium') return 'moderate';
@@ -819,7 +852,7 @@ function assessOverallRisk(severityCounts) {
 
 function calculateScannerPerformance(allVulnerabilities) {
   const scannerStats = {};
-  
+
   // Count findings per scanner
   for (const vuln of allVulnerabilities) {
     if (!scannerStats[vuln.scanner]) {
@@ -854,25 +887,25 @@ function calculateRemediationPriority(severity, exploitDifficulty, businessImpac
   const severityWeight = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
   const difficultyWeight = { trivial: 4, easy: 3, moderate: 2, difficult: 1, expert: 0 };
   const businessWeight = typeof businessImpact === 'string' && businessImpact.toLowerCase().includes('critical') ? 2 :
-                        typeof businessImpact === 'string' && businessImpact.toLowerCase().includes('high') ? 1.5 :
-                        typeof businessImpact === 'string' && businessImpact.toLowerCase().includes('medium') ? 1 : 0.5;
+    typeof businessImpact === 'string' && businessImpact.toLowerCase().includes('high') ? 1.5 :
+      typeof businessImpact === 'string' && businessImpact.toLowerCase().includes('medium') ? 1 : 0.5;
 
   const priority = (severityWeight[severity] || 1) + (difficultyWeight[exploitDifficulty] || 1) + businessWeight;
-  
+
   if (priority >= 7) return 'critical';
-  if (priority >= 5) return 'high'; 
+  if (priority >= 5) return 'high';
   if (priority >= 3) return 'medium';
   return 'low';
 }
 
 // MAIN UNIFIED PROCESSING FUNCTION
-async function processAllVulnerabilitiesUnified(allVulnerabilities, scanResults, scanMetadata, target, scanId, supabase) {
+async function processAllVulnerabilitiesUnified(allVulnerabilities, scanResults, scanMetadata, target, scanId, supabase, companyProfile = null) {
   console.log(`\n💾 Raw findings stored for audit: ${allVulnerabilities.length} total findings`);
 
   await updateScanProgress(supabase, scanId, "running", 50, `Processing ${allVulnerabilities.length} vulnerabilities with AI for deduplication and standardization...`);
 
   // Process all vulnerabilities together with AI
-  const aiAnalysis = await processAllVulnerabilitiesWithAI(allVulnerabilities, scanMetadata, target);
+  const aiAnalysis = await processAllVulnerabilitiesWithAI(allVulnerabilities, scanMetadata, target, companyProfile);
 
   console.log(`\n📊 AI Analysis Summary:`);
   console.log(`  - Raw findings: ${allVulnerabilities.length}`);
@@ -931,7 +964,7 @@ async function processAllVulnerabilitiesUnified(allVulnerabilities, scanResults,
       risk_level: vuln.impact_score,
       remediation_steps: vuln.detailed_remediation_steps,
       created_at: new Date().toISOString(),
-      
+
       // Enhanced AI analysis fields
       ai_analysis: vuln.ai_security_analysis,
       business_impact: vuln.business_impact,
@@ -941,13 +974,13 @@ async function processAllVulnerabilitiesUnified(allVulnerabilities, scanResults,
       compliance_notes: vuln.compliance_considerations,
       exploit_difficulty: vuln.exploit_difficulty,
       reference_links: vuln.references,
-      
+
       // Enhanced metadata
       finding_category: vuln.category,
       impact_score: vuln.impact_score,
       remediation_priority: vuln.remediation_priority,
       scanner_correlation: JSON.stringify(vuln.evidence),
-      
+
       // CVE ID
       cve_id: null
     };
@@ -1121,7 +1154,7 @@ function buildNiktoCommand(target, scanner, options = {}) {
 function buildW3afCommand(target, scanner, options = {}) {
   const reportHostPath = path.join(reportsDir, scanner.reportFile);
   const containerReportPath = `${scanner.containerWorkDir}/${scanner.reportFile}`;
-  
+
   const scriptPath = path.join(scriptsDir, 'w3af_scan.py');
   const w3afScript = `#!/usr/bin/env python3
 import os
@@ -1219,7 +1252,7 @@ function parseZapReport(rawReport) {
 
 function parseWapitiReport(rawReport) {
   const vulnerabilities = [];
-  
+
   if (!rawReport || !rawReport.vulnerabilities) {
     return [{
       scanner: 'wapiti',
@@ -1288,7 +1321,7 @@ function parseWapitiReport(rawReport) {
 
 function parseReNgineReport(rawReport) {
   const vulnerabilities = rawReport?.vulnerabilities || [];
-  
+
   if (vulnerabilities.length === 0) {
     return [{
       scanner: 'rengine',
@@ -1325,29 +1358,29 @@ function parseReNgineReport(rawReport) {
 // UNIVERSAL Nikto parser - Extract ANY vulnerability types for ANY website
 function parseNiktoFromStdout(stdout) {
   console.log(`🔍 Nikto extracting universal vulnerabilities from scan results...`);
-  
+
   const vulnerabilities = [];
   const lines = stdout.split('\n');
   const processedFindings = new Set();
-  
+
   console.log(`📊 Nikto parsing ${lines.length} lines for universal vulnerability extraction`);
-  
+
   for (const line of lines) {
     const trimmedLine = line.trim();
-    
+
     if (trimmedLine.startsWith('+ ') && trimmedLine.includes(':')) {
-      
+
       let title = 'Security Finding';
       let severity = 'medium';
       let description = trimmedLine.replace(/^\+\s*/, '').trim();
       let url = '';
-      
+
       const urlMatches = [
         trimmedLine.match(/(GET|POST|HEAD|PUT|DELETE|OPTIONS|TRACE|DEBUG)\s+([^:\s]+)/),
         trimmedLine.match(/\/([^:\s]+)/),
         trimmedLine.match(/(\w+\.\w+)/),
       ];
-      
+
       for (const match of urlMatches) {
         if (match && match[2]) {
           url = match[2].trim();
@@ -1357,7 +1390,7 @@ function parseNiktoFromStdout(stdout) {
           break;
         }
       }
-      
+
       if (description.toLowerCase().includes('header') && (description.toLowerCase().includes('missing') || description.toLowerCase().includes('not set'))) {
         title = 'Missing Security Header';
         severity = 'medium';
@@ -1398,13 +1431,13 @@ function parseNiktoFromStdout(stdout) {
         title = 'Security Finding';
         severity = 'medium';
       }
-      
+
       const findingKey = `${description.substring(0, 100).replace(/[^\w]/g, '')}`;
       if (processedFindings.has(findingKey)) {
         continue;
       }
       processedFindings.add(findingKey);
-      
+
       vulnerabilities.push({
         scanner: 'nikto',
         title: title,
@@ -1421,12 +1454,12 @@ function parseNiktoFromStdout(stdout) {
       });
     }
   }
-  
+
   console.log(`✅ Nikto extracted ${vulnerabilities.length} universal vulnerabilities`);
   if (vulnerabilities.length > 0) {
     console.log(`📋 Nikto found vulnerability types: ${[...new Set(vulnerabilities.map(v => v.title))].join(', ')}`);
   }
-  
+
   return vulnerabilities;
 }
 
@@ -1524,6 +1557,30 @@ app.post('/multi-scan', async (req, res) => {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
+    // Fetch company profile context
+    let companyProfile = null;
+    try {
+      const { data: scanReport } = await supabase
+        .from('scan_reports')
+        .select('company_profile_id')
+        .eq('id', scanId)
+        .single();
+
+      if (scanReport?.company_profile_id) {
+        const { data: profile } = await supabase
+          .from('company_profiles')
+          .select('*')
+          .eq('id', scanReport.company_profile_id)
+          .single();
+        companyProfile = profile;
+        if (companyProfile) {
+          console.log(`🏢 Loaded business context for: ${companyProfile.company_name} (${companyProfile.industry})`);
+        }
+      }
+    } catch (ctxError) {
+      console.warn('⚠️ Could not load business context:', ctxError.message);
+    }
+
     await updateScanProgress(supabase, scanId, "running", 10, `Starting ${validScanners.length} scanner(s): ${validScanners.join(', ')}`);
 
     const allVulnerabilities = [];
@@ -1686,7 +1743,8 @@ app.post('/multi-scan', async (req, res) => {
       scanMetadata,
       target,
       scanId,
-      supabase
+      supabase,
+      companyProfile
     );
 
     console.log(`\n🎯 PHASE 2 COMPLETE: AI processed ${unifiedResults.processedVulnerabilities.length} unique vulnerabilities`);
@@ -1704,7 +1762,7 @@ app.post('/multi-scan', async (req, res) => {
       console.log('\n📊 FINAL DATABASE INSERT SUMMARY:');
       console.log('='.repeat(80));
       console.log(`📋 Total vulnerabilities to insert: ${unifiedResults.processedVulnerabilities.length}`);
-      
+
       // Show sample of what's being inserted
       if (unifiedResults.processedVulnerabilities.length > 0) {
         const sample = unifiedResults.processedVulnerabilities[0];
@@ -1720,21 +1778,21 @@ app.post('/multi-scan', async (req, res) => {
         console.log(`🔧 Remediation Steps: ${Array.isArray(sample.remediation_steps) ? sample.remediation_steps.length : 0} steps`);
         console.log(`⚡ Attack Scenarios: ${Array.isArray(sample.attack_scenarios) ? sample.attack_scenarios.length : 0} scenarios`);
         console.log(`📚 References: ${Array.isArray(sample.reference_links) ? sample.reference_links.length : 0} links`);
-        
+
         if (Array.isArray(sample.remediation_steps) && sample.remediation_steps.length > 0) {
           console.log('\n🔧 REMEDIATION STEPS PREVIEW:');
           sample.remediation_steps.slice(0, 3).forEach((step, i) => {
             console.log(`  ${i + 1}. ${step.substring(0, 100)}...`);
           });
         }
-        
+
         if (Array.isArray(sample.attack_scenarios) && sample.attack_scenarios.length > 0) {
           console.log('\n⚡ ATTACK SCENARIOS PREVIEW:');
           sample.attack_scenarios.slice(0, 2).forEach((scenario, i) => {
             console.log(`  ${i + 1}. ${scenario.substring(0, 100)}...`);
           });
         }
-        
+
         console.log('\n✅ CONTENT VALIDATION:');
         console.log(`- Unique title: ${sample.title ? 'YES' : 'NO'}`);
         console.log(`- Has description: ${sample.description ? 'YES' : 'NO'}`);
@@ -1759,14 +1817,14 @@ app.post('/multi-scan', async (req, res) => {
       }
 
       console.log(`✅ Successfully inserted ${inserted.length} deduplicated vulnerabilities`);
-      
+
       // POST-INSERT VERIFICATION LOGGING
       console.log('\n🎯 POST-INSERT VERIFICATION:');
       console.log('-'.repeat(60));
       console.log(`✅ Database confirmed ${inserted.length} vulnerabilities inserted`);
       console.log(`📊 Expected: ${unifiedResults.processedVulnerabilities.length}, Actual: ${inserted.length}`);
       console.log(`🎯 Match: ${inserted.length === unifiedResults.processedVulnerabilities.length ? 'YES' : 'NO'}`);
-      
+
       if (inserted.length > 0) {
         console.log('\n📋 INSERTED VULNERABILITY SAMPLE:');
         const insertedSample = inserted[0];
@@ -1836,17 +1894,17 @@ app.post('/multi-scan', async (req, res) => {
     if (unifiedResults.processedVulnerabilities.length > 0) {
       console.log('\n📋 DETAILED VULNERABILITY BREAKDOWN:');
       console.log('-'.repeat(80));
-      
+
       const severityBreakdown = unifiedResults.processedVulnerabilities.reduce((acc, v) => {
         acc[v.severity] = (acc[v.severity] || 0) + 1;
         return acc;
       }, {});
-      
+
       console.log('🔴 Severity Distribution:');
       Object.entries(severityBreakdown).forEach(([severity, count]) => {
         console.log(`  - ${severity.toUpperCase()}: ${count} vulnerabilities`);
       });
-      
+
       const scannerBreakdown = unifiedResults.processedVulnerabilities.reduce((acc, v) => {
         const scanners = (v.scanner_name || '').split(',').map(s => s.trim());
         scanners.forEach(scanner => {
@@ -1856,18 +1914,18 @@ app.post('/multi-scan', async (req, res) => {
         });
         return acc;
       }, {});
-      
+
       console.log('\n🔍 Scanner Attribution:');
       Object.entries(scannerBreakdown).forEach(([scanner, count]) => {
         console.log(`  - ${scanner.toUpperCase()}: ${count} findings`);
       });
-      
+
       console.log('\n🎯 Top 5 Vulnerabilities Found:');
       unifiedResults.processedVulnerabilities.slice(0, 5).forEach((vuln, i) => {
         console.log(`  ${i + 1}. ${vuln.title} (${vuln.severity}) - Scanner: ${vuln.scanner_name}`);
       });
     }
-    
+
     console.log('\n✅ Multi-scan processing pipeline completed successfully!');
     console.log('='.repeat(80));
 
@@ -1989,7 +2047,7 @@ app.get('/debug/vulnerabilities/:scanId', async (req, res) => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseKey);
-    
+
     const { data: vulnerabilities, error } = await supabase
       .from("vulnerabilities")
       .select("*")
@@ -2012,8 +2070,8 @@ app.get('/debug/vulnerabilities/:scanId', async (req, res) => {
       attack_scenarios_count: Array.isArray(v.attack_scenarios) ? v.attack_scenarios.length : 0,
       description_length: (v.description || '').length,
       ai_analysis_preview: (v.ai_analysis || '').substring(0, 200) + '...',
-      remediation_preview: Array.isArray(v.remediation_steps) && v.remediation_steps.length > 0 
-        ? v.remediation_steps[0].substring(0, 100) + '...' 
+      remediation_preview: Array.isArray(v.remediation_steps) && v.remediation_steps.length > 0
+        ? v.remediation_steps[0].substring(0, 100) + '...'
         : 'No remediation steps'
     }));
 
