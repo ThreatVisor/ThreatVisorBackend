@@ -131,7 +131,8 @@ async function processAllVulnerabilitiesWithAI(allVulnerabilities, scanMetadata,
   console.log('🤖 AI PROCESSING STARTING - ENHANCED LOGGING');
   console.log('='.repeat(80));
 
-  const BATCH_SIZE = 5;
+  // REDUCED BATCH SIZE to prevent token limit truncation
+  const BATCH_SIZE = 3;
   const batches = [];
   for (let i = 0; i < allVulnerabilities.length; i += BATCH_SIZE) {
     batches.push(allVulnerabilities.slice(i, i + BATCH_SIZE));
@@ -164,7 +165,8 @@ Use this context to tailor the "Business Impact" and "Risk Assessment" specifica
     apiKey: process.env.ANTHROPIC_API_KEY,
   });
 
-  const systemPrompt = "You are a senior cybersecurity analyst with 15+ years experience. Generate UNIQUE, detailed content for each vulnerability field. Never repeat the same text across multiple fields. Always provide EXACTLY 5 specific remediation steps with actual commands and configurations. Focus on realistic, actionable security intelligence.";
+  // OPTIMIZED PROMPT: Explicitly requested conciseness to save tokens
+  const systemPrompt = "You are a senior cybersecurity analyst. Generate UNIQUE, detailed content. Never repeat text. Provide EXACTLY 3 specific remediation steps and 3 attack scenarios per vulnerability to ensure concise, high-value output. Focus on realistic security intelligence.";
 
   let allProcessedVulns = [];
   let mergedDuplicatesCount = 0;
@@ -173,7 +175,7 @@ Use this context to tailor the "Business Impact" and "Risk Assessment" specifica
     const currentBatch = batches[batchIndex];
     console.log(`\n🔄 Processing Batch ${batchIndex + 1}/${batches.length} (${currentBatch.length} items)...`);
 
-    const prompt = `You are a senior cybersecurity analyst processing vulnerability findings from multiple security scanners. You must provide SPECIFIC, DETAILED, and UNIQUE content for each vulnerability - absolutely no generic responses.
+    const prompt = `You are a senior cybersecurity analyst processing vulnerability findings. Provide SPECIFIC, DETAILED, and UNIQUE content.
 ${businessContext}
 **SCAN TARGET:** ${target}
 **SCANNERS USED:** ${scanMetadata.scanners_used.join(', ')}
@@ -191,45 +193,37 @@ ${JSON.stringify(currentBatch.map(v => ({
 
 **CRITICAL REQUIREMENTS:**
 
-1. **UNIQUE CONTENT**: Every field must contain completely different, specific content. Never repeat the same text between description, analysis, business_impact, technical_impact, etc.
+1. **UNIQUE CONTENT**: Every field must contain completely different, specific content.
 
-2. **DETAILED EXPLOIT SCENARIOS**: Provide step-by-step attack methods showing EXACTLY how an attacker would exploit each specific vulnerability with realistic technical details.
+2. **CONCISE SCENARIOS**: Provide exactly 3 step-by-step attack scenarios.
 
-5. **ENTERPRISE RISK METRICS**:
-   - **CVSS v3.1 Vector**: Generate a precise CVSS v3.1 vector string (e.g., CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H) based on the technical analysis.
-   - **False Positive Assessment**: Analyze the likelihood of this being a false positive (Low/Medium/High) with specific technical reasoning.
-   - **Compliance Mapping**: Map this vulnerability to specific controls in the company's required frameworks (e.g., "PCI DSS Requirement 6.5.1", "HIPAA §164.306(a)(1)").
+3. **ENTERPRISE RISK METRICS**:
+   - **CVSS v3.1 Vector**: Generate a precise CVSS v3.1 vector string.
+   - **False Positive Assessment**: Analyze likelihood (Low/Medium/High).
+   - **Compliance Mapping**: Map to specific controls (PCI DSS, HIPAA, etc.).
 
 **EXAMPLE OUTPUT FORMAT:**
 
-For a "Missing Content Security Policy" vulnerability:
-
 {
   "title": "Missing Content Security Policy",
-  "main_description": "Content Security Policy (CSP) header is not implemented on ${target}, leaving the application vulnerable to cross-site scripting (XSS) attacks...",
+  "main_description": "Content Security Policy (CSP) header is not implemented on ${target}...",
   "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
   "cvss_score": 6.1,
   "false_positive_likelihood": "Low",
-  "false_positive_reasoning": "Scanner confirmed missing header in HTTP response. Manual verification via curl confirms absence.",
-  "compliance_controls": [
-    "PCI DSS 4.0 Requirement 6.4.1: Defense against XSS",
-    "SOC 2 CC6.1: Logical Access Security",
-    "HIPAA §164.312(c)(1): Integrity Controls"
-  ],
+  "false_positive_reasoning": "Scanner confirmed missing header...",
+  "compliance_controls": ["PCI DSS 4.0 Requirement 6.4.1"],
   "ai_security_analysis": "Security analysis reveals this represents a critical gap...",
-  "business_impact": "Business impact includes potential data breaches affecting customer information, regulatory compliance violations under GDPR/PCI DSS, financial losses from fraudulent transactions, reputation damage, and legal liability. Customer trust erosion could result in 15-25% user base reduction.",
-  "technical_impact": "Technical systems affected include web application security controls, browser-based protections, client-side data integrity, and user session management. All user-facing pages are vulnerable to script injection attacks, potentially compromising authentication systems and data processing.",
+  "business_impact": "Business impact includes potential data breaches...",
+  "technical_impact": "Technical systems affected include web application security controls...",
   "attack_scenarios": [
-    "Reflected XSS exploitation: Attacker crafts malicious URL with JavaScript payload → Victim clicks link → Script executes without CSP protection → Attacker steals session cookies, captures form data, and redirects to phishing site → Complete account takeover achieved",
-    "Third-party resource compromise: Attacker compromises external CDN hosting jQuery library → Injects cryptocurrency mining script into legitimate file → Application loads malicious resource without CSP restriction → User browsers mine cryptocurrency for attacker while degrading system performance",
-    "Stored XSS with CSP bypass: Attacker injects persistent script through vulnerable comment form → Script stored in database → Other users view page containing malicious script → Missing CSP allows execution → Mass credential harvesting and session hijacking campaign"
+    "Reflected XSS exploitation...",
+    "Third-party resource compromise...",
+    "Stored XSS with CSP bypass..."
   ],
   "detailed_remediation_steps": [
-    "Conduct comprehensive audit of all application pages to catalog legitimate script sources, style sources, image sources, and iframe usage across the entire application",
-    "Implement restrictive CSP policy starting with 'Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:' header in web server configuration",
-    "Deploy CSP in report-only mode using 'Content-Security-Policy-Report-Only' header for 1-2 weeks and configure violation reporting endpoint at /csp-report to collect policy violations",
-    "Analyze collected CSP violation reports to identify legitimate external resources, refine policy to whitelist necessary domains, and eliminate 'unsafe-inline' directives where possible",
-    "Switch to enforcing CSP policy, implement automated CSP testing in CI/CD pipeline, and establish monitoring alerts for policy violations in production environment"
+    "Conduct comprehensive audit...",
+    "Implement restrictive CSP policy...",
+    "Deploy CSP in report-only mode..."
   ],
   "scanners_detected": ["zap", "nikto"],
   "severity": "high",
@@ -238,7 +232,7 @@ For a "Missing Content Security Policy" vulnerability:
 }
 
 **YOUR TASK:**
-Process these ${currentBatch.length} vulnerabilities and return detailed analysis with deduplication. Merge similar findings from different scanners but ensure each unique vulnerability gets comprehensive, specific content.
+Process these ${currentBatch.length} vulnerabilities and return detailed analysis.
 
 **REQUIRED JSON OUTPUT:**
 {
@@ -250,23 +244,13 @@ Process these ${currentBatch.length} vulnerabilities and return detailed analysi
   "vulnerabilities": [
     {
       "title": "Specific Vulnerability Title",
-      "main_description": "Detailed technical explanation of the vulnerability and its manifestation on ${target}",
-      "ai_security_analysis": "Comprehensive security analysis with attack vectors, exploitation methods, and specific risk factors",
-      "business_impact": "Specific business consequences including financial, operational, compliance, and reputational risks",
-      "technical_impact": "Technical systems affected, data types at risk, infrastructure implications, and attack surface expansion",
-      "attack_scenarios": [
-        "Detailed step-by-step attack scenario 1 with specific techniques, tools, and realistic outcomes",
-        "Alternative attack scenario 2 showing different exploitation vector and impact",
-        "Advanced attack scenario 3 demonstrating escalation potential and persistent access"
-      ],
-      "detailed_remediation_steps": [
-        "Step 1: Specific immediate action with exact commands, file paths, or configuration changes",
-        "Step 2: Technical implementation details with specific parameters and values to configure",
-        "Step 3: Testing and validation procedures specific to this vulnerability type and environment",
-        "Step 4: Deployment instructions with specific rollout steps and verification methods",
-        "Step 5: Monitoring and maintenance procedures to prevent recurrence of this vulnerability"
-      ],
-      "scanners_detected": ["scanner1", "scanner2"],
+      "main_description": "Detailed technical explanation",
+      "ai_security_analysis": "Comprehensive security analysis",
+      "business_impact": "Specific business consequences",
+      "technical_impact": "Technical systems affected",
+      "attack_scenarios": ["Scenario 1", "Scenario 2", "Scenario 3"],
+      "detailed_remediation_steps": ["Step 1", "Step 2", "Step 3"],
+      "scanners_detected": ["scanner1"],
       "severity": "critical|high|medium|low",
       "exploit_difficulty": "trivial|easy|moderate|difficult",
       "impact_score": 1-10,
@@ -316,7 +300,36 @@ Return ONLY valid JSON with no additional text or comments.`;
         console.warn('⚠️ Failed to extract JSON substring, attempting to parse original:', extractError);
       }
 
-      const parsedResponse = JSON.parse(aiResponse);
+      let parsedResponse;
+      try {
+        parsedResponse = JSON.parse(aiResponse);
+      } catch (parseError) {
+        console.warn(`⚠️ Batch ${batchIndex + 1} JSON parse failed, attempting repair...`);
+
+        // JSON REPAIR LOGIC
+        try {
+          // 1. Try to close open arrays/objects
+          let repaired = aiResponse.trim();
+          // Remove trailing comma if present
+          if (repaired.endsWith(',')) repaired = repaired.slice(0, -1);
+
+          // Count braces/brackets
+          const openBraces = (repaired.match(/\{/g) || []).length;
+          const closeBraces = (repaired.match(/\}/g) || []).length;
+          const openBrackets = (repaired.match(/\[/g) || []).length;
+          const closeBrackets = (repaired.match(/\]/g) || []).length;
+
+          // Append missing closing characters
+          if (openBrackets > closeBrackets) repaired += ']'.repeat(openBrackets - closeBrackets);
+          if (openBraces > closeBraces) repaired += '}'.repeat(openBraces - closeBraces);
+
+          parsedResponse = JSON.parse(repaired);
+          console.log(`✅ Batch ${batchIndex + 1} repaired successfully`);
+        } catch (repairError) {
+          console.error(`❌ Batch ${batchIndex + 1} repair failed:`, repairError);
+          throw parseError; // Throw original error if repair fails
+        }
+      }
 
       if (parsedResponse.vulnerabilities) {
         allProcessedVulns.push(...parsedResponse.vulnerabilities);
