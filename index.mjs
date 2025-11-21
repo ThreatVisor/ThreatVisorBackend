@@ -1495,7 +1495,7 @@ app.post('/multi-scan', async (req, res) => {
     console.log(`  - Scanners successfully executed: ${validScanners.join(', ')}`);
     console.log(`  - Scan ID: ${scanId}`);
     console.log(`  - Target: ${target}`);
-    console.log(`  - AI processing: ${OPENAI_API_KEY && !OPENAI_API_KEY.includes('your_ope') ? 'ENABLED' : 'FALLBACK'}`);
+    console.log(`  - AI processing: ${ANTHROPIC_API_KEY ? 'ENABLED' : 'FALLBACK'}`);
     console.log('='.repeat(80));
 
     // DETAILED VULNERABILITY BREAKDOWN LOGGING
@@ -1562,7 +1562,7 @@ app.post('/scan', async (req, res) => {
 
 // Enhanced health check with AI status
 app.get('/health', (req, res) => {
-  const aiConfigured = !!OPENAI_API_KEY && !OPENAI_API_KEY.includes('your_ope');
+  const aiConfigured = !!ANTHROPIC_API_KEY;
 
   res.json({
     status: 'healthy',
@@ -1570,7 +1570,7 @@ app.get('/health', (req, res) => {
     scanner_details: SCANNERS,
     ai_features: {
       openai_configured: aiConfigured,
-      model: OPENAI_MODEL,
+      model: ANTHROPIC_MODEL,
       unified_processing: true,
       deduplication: true,
       comprehensive_analysis: true,
@@ -1701,7 +1701,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('\n' + '🛡️ MULTI-SCANNER MICROSERVICE STARTED');
   console.log('='.repeat(60));
   console.log(`🌐 Listening on: 0.0.0.0:${PORT}`);
-  console.log(`🤖 OpenAI integration: ${OPENAI_API_KEY && !OPENAI_API_KEY.includes('your_ope') ? 'ENABLED' : 'DISABLED'}`);
+  console.log(`🤖 Anthropic integration: ${ANTHROPIC_API_KEY ? 'ENABLED' : 'DISABLED'}`);
   console.log(`🔧 Available scanners: ${Object.keys(SCANNERS).join(', ')}`);
   console.log(`📁 Reports directory: ${reportsDir} (exists: ${fs.existsSync(reportsDir)})`);
   console.log(`📜 Scripts directory: ${scriptsDir} (exists: ${fs.existsSync(scriptsDir)})`);
