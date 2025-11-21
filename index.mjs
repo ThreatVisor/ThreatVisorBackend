@@ -255,181 +255,182 @@ Process all ${allVulnerabilities.length} vulnerabilities and return detailed ana
 
 Return ONLY valid JSON with no additional text or comments.`;
 
-  console.error('❌ Anthropic API key not configured - cannot proceed with AI analysis');
-  throw new Error('ANTHROPIC_API_KEY not configured');
-}
-
-try {
-  console.log(`🔑 Using Anthropic model: ${ANTHROPIC_MODEL}`);
-  console.log(`📊 Processing ${allVulnerabilities.length} vulnerabilities`);
-  console.log(`🎯 Target: ${target}`);
-
-  const anthropic = new Anthropic({
-    apiKey: ANTHROPIC_API_KEY,
-  });
-
-  const systemPrompt = "You are a senior cybersecurity analyst with 15+ years experience. Generate UNIQUE, detailed content for each vulnerability field. Never repeat the same text across multiple fields. Always provide EXACTLY 5 specific remediation steps with actual commands and configurations. Focus on realistic, actionable security intelligence.";
-
-  const msg = await anthropic.messages.create({
-    model: ANTHROPIC_MODEL,
-    max_tokens: 4000,
-    temperature: 0.3,
-    system: systemPrompt,
-    messages: [
-      {
-        role: "user",
-        content: prompt
-      }
-    ]
-  });
-
-  const aiResponse = msg.content[0].text.trim();
-
-  console.log('✅ AI response received successfully');
-  console.log(`📏 AI response length: ${aiResponse.length} characters`);
-  console.log('📝 AI response preview (first 300 chars):');
-  console.log(aiResponse.substring(0, 300) + '...');
-
-  try {
-    const parsedResponse = JSON.parse(aiResponse);
-
-    // ENHANCED LOGGING - Show exactly what AI generated
-    console.log('\n' + '🎯 AI ANALYSIS COMPLETE - DETAILED RESULTS:');
-    console.log('='.repeat(60));
-    console.log(`📊 Unique vulnerabilities: ${parsedResponse.vulnerabilities?.length || 0}`);
-    console.log(`🔗 Duplicates merged: ${parsedResponse.summary?.duplicates_merged || 0}`);
-    console.log(`⚠️  Overall risk: ${parsedResponse.summary?.overall_risk_assessment || 'Unknown'}`);
-
-    if (parsedResponse.vulnerabilities && parsedResponse.vulnerabilities.length > 0) {
-      console.log('\n🔍 SAMPLE AI-GENERATED VULNERABILITY CONTENT:');
-      console.log('-'.repeat(60));
-      const sampleVuln = parsedResponse.vulnerabilities[0];
-
-      console.log(`📋 Title: ${sampleVuln.title}`);
-      console.log(`🔴 Severity: ${sampleVuln.severity}`);
-      console.log(`🎯 Scanners: ${sampleVuln.scanners_detected?.join(', ') || 'Unknown'}`);
-
-      console.log('\n📖 Main Description (first 200 chars):');
-      console.log((sampleVuln.main_description || 'None').substring(0, 200) + '...');
-
-      console.log('\n🔍 AI Security Analysis (first 200 chars):');
-      console.log((sampleVuln.ai_security_analysis || 'None').substring(0, 200) + '...');
-
-      console.log('\n💼 Business Impact (first 200 chars):');
-      console.log((sampleVuln.business_impact || 'None').substring(0, 200) + '...');
-
-      console.log('\n⚡ Attack Scenarios:');
-      if (sampleVuln.attack_scenarios && Array.isArray(sampleVuln.attack_scenarios)) {
-        sampleVuln.attack_scenarios.forEach((scenario, i) => {
-          console.log(`  ${i + 1}. ${scenario.substring(0, 150)}...`);
-        });
-      } else {
-        console.log('  ❌ No attack scenarios generated');
-      }
-
-      console.log('\n🏢 Enterprise Metrics:');
-      console.log(`  - CVSS: ${sampleVuln.cvss_vector || 'N/A'} (${sampleVuln.cvss_score || 0})`);
-      console.log(`  - False Positive Risk: ${sampleVuln.false_positive_likelihood || 'Unknown'}`);
-      console.log(`  - Compliance: ${sampleVuln.compliance_controls?.join(', ') || 'None'}`);
-
-
-      console.log('\n🔧 Remediation Steps:');
-      if (sampleVuln.detailed_remediation_steps && Array.isArray(sampleVuln.detailed_remediation_steps)) {
-        sampleVuln.detailed_remediation_steps.forEach((step, i) => {
-          console.log(`  ${i + 1}. ${step.substring(0, 100)}...`);
-        });
-      } else {
-        console.log('  ❌ No remediation steps generated');
-      }
-
-      console.log('\n🎯 CONTENT UNIQUENESS CHECK:');
-      const contents = [
-        sampleVuln.main_description,
-        sampleVuln.ai_security_analysis,
-        sampleVuln.business_impact,
-        sampleVuln.technical_impact
-      ];
-      const isUnique = new Set(contents).size === contents.filter(Boolean).length;
-      console.log(`✅ Content uniqueness: ${isUnique ? 'PASSED' : 'FAILED'}`);
-    }
-
-    // Transform AI response to expected format
-    const transformedResponse = {
-      summary: {
-        total_unique_vulnerabilities: parsedResponse.vulnerabilities?.length || 0,
-        critical_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'critical').length || 0,
-        high_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'high').length || 0,
-        medium_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'medium').length || 0,
-        low_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'low').length || 0,
-        info_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'info').length || 0,
-        duplicates_merged: parsedResponse.summary?.duplicates_merged || (allVulnerabilities.length - (parsedResponse.vulnerabilities?.length || 0)),
-        overall_risk_assessment: parsedResponse.summary?.overall_risk_assessment || "High - Detailed AI analysis completed"
-      },
-      vulnerabilities: (parsedResponse.vulnerabilities || []).map((v, index) => ({
-        id: `ai_vuln_${index + 1}`,
-        title: v.title,
-        severity: v.severity || 'medium',
-        confidence: 'high',
-        category: categorizeVulnerability(v.title),
-        cwe_id: null,
-        wasc_id: null,
-        scanners_detected: v.scanners_detected || ['unknown'],
-        urls_affected: [target],
-        main_description: v.main_description,
-        ai_security_analysis: v.ai_security_analysis,
-        business_impact: v.business_impact,
-        technical_impact: v.technical_impact,
-        solution_summary: v.detailed_remediation_steps?.[0]?.substring(0, 100) + '...' || 'Implement security controls',
-        detailed_remediation_steps: v.detailed_remediation_steps || [],
-        attack_scenarios: v.attack_scenarios || [],
-        prevention_practices: [
-          "Implement comprehensive security testing in development pipeline",
-          "Regular security assessments and penetration testing",
-          "Security awareness training for development teams",
-          "Automated security monitoring and alerting"
-        ],
-        compliance_considerations: `This ${v.severity} vulnerability may impact compliance with OWASP Top 10, PCI DSS, GDPR, and other security frameworks. Immediate remediation recommended for regulatory compliance.`,
-        exploit_difficulty: v.exploit_difficulty || 'moderate',
-        remediation_priority: v.severity === 'critical' ? 'critical' : v.severity === 'high' ? 'high' : 'medium',
-        impact_score: v.impact_score || calculateImpactScore(v.severity, v.exploit_difficulty),
-        references: [
-          "https://owasp.org/www-project-top-ten/",
-          "https://cheatsheetseries.owasp.org/",
-          "https://cwe.mitre.org/"
-        ],
-        evidence: {
-          scanner_outputs: v.scanners_detected?.reduce((acc, scanner) => {
-            acc[scanner] = `${scanner} detected: ${v.title}`;
-            return acc;
-          }, {}) || {},
-          correlation_notes: `Found by ${v.scanners_detected?.length || 1} scanner(s): ${v.scanners_detected?.join(', ') || 'unknown'}. AI-generated comprehensive analysis with detailed exploit scenarios and specific remediation guidance.`
-        },
-        // Enterprise Fields
-        cvss_vector: v.cvss_vector,
-        cvss_score: v.cvss_score,
-        false_positive_likelihood: v.false_positive_likelihood,
-        false_positive_reasoning: v.false_positive_reasoning,
-        compliance_controls: v.compliance_controls
-      })),
-      scanner_performance: calculateScannerPerformance(allVulnerabilities)
-    };
-
-    console.log('\n✅ AI PROCESSING COMPLETED SUCCESSFULLY');
-    console.log('='.repeat(80));
-
-    return transformedResponse;
-
-  } catch (parseError) {
-    console.error('❌ Failed to parse AI JSON response:', parseError);
-    console.log('📝 Raw AI response that failed to parse:');
-    console.log(aiResponse.substring(0, 1000));
-    throw new Error(`Failed to parse AI response: ${parseError.message}`);
+  if (!ANTHROPIC_API_KEY) {
+    console.error('❌ Anthropic API key not configured - cannot proceed with AI analysis');
+    throw new Error('ANTHROPIC_API_KEY not configured');
   }
 
-} catch (error) {
-  console.error('❌ AI processing failed with error:', error);
-  throw error;
-}
+  try {
+    console.log(`🔑 Using Anthropic model: ${ANTHROPIC_MODEL}`);
+    console.log(`📊 Processing ${allVulnerabilities.length} vulnerabilities`);
+    console.log(`🎯 Target: ${target}`);
+
+    const anthropic = new Anthropic({
+      apiKey: ANTHROPIC_API_KEY,
+    });
+
+    const systemPrompt = "You are a senior cybersecurity analyst with 15+ years experience. Generate UNIQUE, detailed content for each vulnerability field. Never repeat the same text across multiple fields. Always provide EXACTLY 5 specific remediation steps with actual commands and configurations. Focus on realistic, actionable security intelligence.";
+
+    const msg = await anthropic.messages.create({
+      model: ANTHROPIC_MODEL,
+      max_tokens: 4000,
+      temperature: 0.3,
+      system: systemPrompt,
+      messages: [
+        {
+          role: "user",
+          content: prompt
+        }
+      ]
+    });
+
+    const aiResponse = msg.content[0].text.trim();
+
+    console.log('✅ AI response received successfully');
+    console.log(`📏 AI response length: ${aiResponse.length} characters`);
+    console.log('📝 AI response preview (first 300 chars):');
+    console.log(aiResponse.substring(0, 300) + '...');
+
+    try {
+      const parsedResponse = JSON.parse(aiResponse);
+
+      // ENHANCED LOGGING - Show exactly what AI generated
+      console.log('\n' + '🎯 AI ANALYSIS COMPLETE - DETAILED RESULTS:');
+      console.log('='.repeat(60));
+      console.log(`📊 Unique vulnerabilities: ${parsedResponse.vulnerabilities?.length || 0}`);
+      console.log(`🔗 Duplicates merged: ${parsedResponse.summary?.duplicates_merged || 0}`);
+      console.log(`⚠️  Overall risk: ${parsedResponse.summary?.overall_risk_assessment || 'Unknown'}`);
+
+      if (parsedResponse.vulnerabilities && parsedResponse.vulnerabilities.length > 0) {
+        console.log('\n🔍 SAMPLE AI-GENERATED VULNERABILITY CONTENT:');
+        console.log('-'.repeat(60));
+        const sampleVuln = parsedResponse.vulnerabilities[0];
+
+        console.log(`📋 Title: ${sampleVuln.title}`);
+        console.log(`🔴 Severity: ${sampleVuln.severity}`);
+        console.log(`🎯 Scanners: ${sampleVuln.scanners_detected?.join(', ') || 'Unknown'}`);
+
+        console.log('\n📖 Main Description (first 200 chars):');
+        console.log((sampleVuln.main_description || 'None').substring(0, 200) + '...');
+
+        console.log('\n🔍 AI Security Analysis (first 200 chars):');
+        console.log((sampleVuln.ai_security_analysis || 'None').substring(0, 200) + '...');
+
+        console.log('\n💼 Business Impact (first 200 chars):');
+        console.log((sampleVuln.business_impact || 'None').substring(0, 200) + '...');
+
+        console.log('\n⚡ Attack Scenarios:');
+        if (sampleVuln.attack_scenarios && Array.isArray(sampleVuln.attack_scenarios)) {
+          sampleVuln.attack_scenarios.forEach((scenario, i) => {
+            console.log(`  ${i + 1}. ${scenario.substring(0, 150)}...`);
+          });
+        } else {
+          console.log('  ❌ No attack scenarios generated');
+        }
+
+        console.log('\n🏢 Enterprise Metrics:');
+        console.log(`  - CVSS: ${sampleVuln.cvss_vector || 'N/A'} (${sampleVuln.cvss_score || 0})`);
+        console.log(`  - False Positive Risk: ${sampleVuln.false_positive_likelihood || 'Unknown'}`);
+        console.log(`  - Compliance: ${sampleVuln.compliance_controls?.join(', ') || 'None'}`);
+
+
+        console.log('\n🔧 Remediation Steps:');
+        if (sampleVuln.detailed_remediation_steps && Array.isArray(sampleVuln.detailed_remediation_steps)) {
+          sampleVuln.detailed_remediation_steps.forEach((step, i) => {
+            console.log(`  ${i + 1}. ${step.substring(0, 100)}...`);
+          });
+        } else {
+          console.log('  ❌ No remediation steps generated');
+        }
+
+        console.log('\n🎯 CONTENT UNIQUENESS CHECK:');
+        const contents = [
+          sampleVuln.main_description,
+          sampleVuln.ai_security_analysis,
+          sampleVuln.business_impact,
+          sampleVuln.technical_impact
+        ];
+        const isUnique = new Set(contents).size === contents.filter(Boolean).length;
+        console.log(`✅ Content uniqueness: ${isUnique ? 'PASSED' : 'FAILED'}`);
+      }
+
+      // Transform AI response to expected format
+      const transformedResponse = {
+        summary: {
+          total_unique_vulnerabilities: parsedResponse.vulnerabilities?.length || 0,
+          critical_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'critical').length || 0,
+          high_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'high').length || 0,
+          medium_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'medium').length || 0,
+          low_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'low').length || 0,
+          info_count: parsedResponse.vulnerabilities?.filter(v => v.severity === 'info').length || 0,
+          duplicates_merged: parsedResponse.summary?.duplicates_merged || (allVulnerabilities.length - (parsedResponse.vulnerabilities?.length || 0)),
+          overall_risk_assessment: parsedResponse.summary?.overall_risk_assessment || "High - Detailed AI analysis completed"
+        },
+        vulnerabilities: (parsedResponse.vulnerabilities || []).map((v, index) => ({
+          id: `ai_vuln_${index + 1}`,
+          title: v.title,
+          severity: v.severity || 'medium',
+          confidence: 'high',
+          category: categorizeVulnerability(v.title),
+          cwe_id: null,
+          wasc_id: null,
+          scanners_detected: v.scanners_detected || ['unknown'],
+          urls_affected: [target],
+          main_description: v.main_description,
+          ai_security_analysis: v.ai_security_analysis,
+          business_impact: v.business_impact,
+          technical_impact: v.technical_impact,
+          solution_summary: v.detailed_remediation_steps?.[0]?.substring(0, 100) + '...' || 'Implement security controls',
+          detailed_remediation_steps: v.detailed_remediation_steps || [],
+          attack_scenarios: v.attack_scenarios || [],
+          prevention_practices: [
+            "Implement comprehensive security testing in development pipeline",
+            "Regular security assessments and penetration testing",
+            "Security awareness training for development teams",
+            "Automated security monitoring and alerting"
+          ],
+          compliance_considerations: `This ${v.severity} vulnerability may impact compliance with OWASP Top 10, PCI DSS, GDPR, and other security frameworks. Immediate remediation recommended for regulatory compliance.`,
+          exploit_difficulty: v.exploit_difficulty || 'moderate',
+          remediation_priority: v.severity === 'critical' ? 'critical' : v.severity === 'high' ? 'high' : 'medium',
+          impact_score: v.impact_score || calculateImpactScore(v.severity, v.exploit_difficulty),
+          references: [
+            "https://owasp.org/www-project-top-ten/",
+            "https://cheatsheetseries.owasp.org/",
+            "https://cwe.mitre.org/"
+          ],
+          evidence: {
+            scanner_outputs: v.scanners_detected?.reduce((acc, scanner) => {
+              acc[scanner] = `${scanner} detected: ${v.title}`;
+              return acc;
+            }, {}) || {},
+            correlation_notes: `Found by ${v.scanners_detected?.length || 1} scanner(s): ${v.scanners_detected?.join(', ') || 'unknown'}. AI-generated comprehensive analysis with detailed exploit scenarios and specific remediation guidance.`
+          },
+          // Enterprise Fields
+          cvss_vector: v.cvss_vector,
+          cvss_score: v.cvss_score,
+          false_positive_likelihood: v.false_positive_likelihood,
+          false_positive_reasoning: v.false_positive_reasoning,
+          compliance_controls: v.compliance_controls
+        })),
+        scanner_performance: calculateScannerPerformance(allVulnerabilities)
+      };
+
+      console.log('\n✅ AI PROCESSING COMPLETED SUCCESSFULLY');
+      console.log('='.repeat(80));
+
+      return transformedResponse;
+
+    } catch (parseError) {
+      console.error('❌ Failed to parse AI JSON response:', parseError);
+      console.log('📝 Raw AI response that failed to parse:');
+      console.log(aiResponse.substring(0, 1000));
+      throw new Error(`Failed to parse AI response: ${parseError.message}`);
+    }
+
+  } catch (error) {
+    console.error('❌ AI processing failed with error:', error);
+    throw error;
+  }
 }
 
 
