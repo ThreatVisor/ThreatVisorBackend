@@ -215,6 +215,18 @@ ${JSON.stringify(currentBatch.map(v => ({
   "ai_security_analysis": "Security analysis reveals this represents a critical gap...",
   "business_impact": "Business impact includes potential data breaches...",
   "technical_impact": "Technical systems affected include web application security controls...",
+  "solution_summary": "Implement a restrictive Content Security Policy (CSP) to mitigate XSS and data injection attacks.",
+  "prevention_practices": [
+    "Implement comprehensive security headers",
+    "Regular security assessments",
+    "Automated security testing in CI/CD"
+  ],
+  "compliance_considerations": "This vulnerability may impact compliance with PCI DSS Requirement 6.4.1 and GDPR Article 32.",
+  "remediation_priority": "high",
+  "references": [
+    "https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP",
+    "https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html"
+  ],
   "attack_scenarios": [
     "Reflected XSS exploitation...",
     "Third-party resource compromise...",
@@ -248,6 +260,11 @@ Process these ${currentBatch.length} vulnerabilities and return detailed analysi
       "ai_security_analysis": "Comprehensive security analysis",
       "business_impact": "Specific business consequences",
       "technical_impact": "Technical systems affected",
+      "solution_summary": "Concise solution summary",
+      "prevention_practices": ["Practice 1", "Practice 2", "Practice 3"],
+      "compliance_considerations": "Detailed compliance implications",
+      "remediation_priority": "critical|high|medium|low",
+      "references": ["url1", "url2"],
       "attack_scenarios": ["Scenario 1", "Scenario 2", "Scenario 3"],
       "detailed_remediation_steps": ["Step 1", "Step 2", "Step 3"],
       "scanners_detected": ["scanner1"],
