@@ -284,7 +284,14 @@ Return ONLY valid JSON with no additional text or comments.`;
       ]
     });
 
-    const aiResponse = msg.content[0].text.trim();
+    let aiResponse = msg.content[0].text.trim();
+
+    // Clean markdown code blocks if present
+    if (aiResponse.includes('```json')) {
+      aiResponse = aiResponse.replace(/```json\n?|\n?```/g, '').trim();
+    } else if (aiResponse.includes('```')) {
+      aiResponse = aiResponse.replace(/```\n?|\n?```/g, '').trim();
+    }
 
     console.log('✅ AI response received successfully');
     console.log(`📏 AI response length: ${aiResponse.length} characters`);
