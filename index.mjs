@@ -293,6 +293,19 @@ Return ONLY valid JSON with no additional text or comments.`;
       aiResponse = aiResponse.replace(/```\n?|\n?```/g, '').trim();
     }
 
+    // ROBUST JSON EXTRACTION - Fix for "Unexpected token" errors
+    // Sometimes AI adds text before/after JSON even after regex cleaning
+    try {
+      const jsonStart = aiResponse.indexOf('{');
+      const jsonEnd = aiResponse.lastIndexOf('}');
+
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        aiResponse = aiResponse.substring(jsonStart, jsonEnd + 1);
+      }
+    } catch (extractError) {
+      console.warn('⚠️ Failed to extract JSON substring, attempting to parse original:', extractError);
+    }
+
     console.log('✅ AI response received successfully');
     console.log(`📏 AI response length: ${aiResponse.length} characters`);
     console.log('📝 AI response preview (first 300 chars):');
