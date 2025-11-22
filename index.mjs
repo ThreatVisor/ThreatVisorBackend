@@ -148,18 +148,46 @@ async function processAllVulnerabilitiesWithAI(allVulnerabilities, scanMetadata,
   let businessContext = "";
   if (companyProfile) {
     console.log('✅ Building business context string from company profile...');
-    businessContext = `
-**BUSINESS CONTEXT:**
-- Company: ${companyProfile.company_name}
-- Industry: ${companyProfile.industry}
-- Type: ${companyProfile.website_purpose}
-- Data Sensitivity: ${companyProfile.data_records_count ? companyProfile.data_records_count + ' records' : 'Unknown'}
-- Downtime Cost: ${companyProfile.downtime_cost_per_hour ? '$' + companyProfile.downtime_cost_per_hour + '/hour' : 'Unknown'}
-- Compliance: ${companyProfile.compliance_requirements?.join(', ') || 'None'}
-- Region: ${companyProfile.geographic_region || 'Unknown'}
-
-Use this context to tailor the "Business Impact" and "Risk Assessment" specifically to this organization. For example, if they are in Healthcare (HIPAA) or Finance (PCI DSS), emphasize relevant compliance risks.
-`;
+    
+    // Build context string with all available fields
+    const contextParts = [
+      `**BUSINESS CONTEXT:**`,
+      `- Company: ${companyProfile.company_name || 'Unknown'}`,
+      `- Industry: ${companyProfile.industry || 'Unknown'}`,
+    ];
+    
+    if (companyProfile.website_purpose) {
+      contextParts.push(`- Type: ${companyProfile.website_purpose}`);
+    }
+    
+    if (companyProfile.annual_revenue) {
+      contextParts.push(`- Annual Revenue: $${companyProfile.annual_revenue.toLocaleString()}`);
+    }
+    
+    if (companyProfile.employee_count) {
+      contextParts.push(`- Employee Count: ${companyProfile.employee_count}`);
+    }
+    
+    if (companyProfile.data_records_count) {
+      contextParts.push(`- Data Sensitivity: ${companyProfile.data_records_count} records`);
+    }
+    
+    if (companyProfile.downtime_cost_per_hour) {
+      contextParts.push(`- Downtime Cost: $${companyProfile.downtime_cost_per_hour}/hour`);
+    }
+    
+    if (companyProfile.compliance_requirements && companyProfile.compliance_requirements.length > 0) {
+      contextParts.push(`- Compliance: ${companyProfile.compliance_requirements.join(', ')}`);
+    }
+    
+    if (companyProfile.geographic_region) {
+      contextParts.push(`- Region: ${companyProfile.geographic_region}`);
+    }
+    
+    contextParts.push('');
+    contextParts.push(`Use this context to tailor the "Business Impact" and "Risk Assessment" specifically to this organization. For example, if they are in Healthcare (HIPAA) or Finance (PCI DSS), emphasize relevant compliance risks. Consider the organization's size (revenue, employee count) when assessing business impact and financial implications of vulnerabilities.`);
+    
+    businessContext = contextParts.join('\n');
     console.log('\n📋 CONSTRUCTED BUSINESS CONTEXT STRING:');
     console.log('-'.repeat(60));
     console.log(businessContext);
@@ -1120,7 +1148,7 @@ function parseW3afReport(reportText) {
 
 // MAIN MULTI-SCAN ENDPOINT with Enhanced Logging
 app.post('/multi-scan', async (req, res) => {
-  const { target, scanId, supabaseUrl, supabaseKey, scanners = ['zap'], zapOptions = { ajaxSpider: false } } = req.body;
+  const { target, scanId, supabaseUrl, supabaseKey, scanners = ['zap'], zapOptions = { ajaxSpider: false }, companyContext } = req.body;
 
   console.log('\n' + '🚀 MULTI-SCAN REQUEST RECEIVED');
   console.log('='.repeat(60));
@@ -1128,6 +1156,10 @@ app.post('/multi-scan', async (req, res) => {
   console.log('🆔 Scan ID:', scanId);
   console.log('🔧 Selected scanners:', scanners);
   console.log('⚙️ ZAP options:', zapOptions);
+  console.log('🏢 Company Context in Request:', companyContext ? 'YES' : 'NO');
+  if (companyContext) {
+    console.log('   Company Context Preview:', JSON.stringify(companyContext, null, 2));
+  }
   console.log('='.repeat(60));
 
   if (!target || typeof target !== "string" || !target.startsWith('http')) {
@@ -1157,70 +1189,110 @@ app.post('/multi-scan', async (req, res) => {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    // Fetch company profile context
+    // Fetch company profile context - prioritize request body, fallback to database
     let companyProfile = null;
     console.log('\n' + '='.repeat(80));
-    console.log('🏢 BUSINESS CONTEXT FETCHING - START');
+    console.log('🏢 BUSINESS CONTEXT RESOLUTION - START');
     console.log('='.repeat(80));
-    console.log(`🔍 Looking up scan report ID: ${scanId}`);
     
-    try {
-      const { data: scanReport, error: scanReportError } = await supabase
-        .from('scan_reports')
-        .select('company_profile_id')
-        .eq('id', scanId)
-        .single();
+    // Priority 1: Check if companyContext was provided in request body
+    if (companyContext) {
+      console.log('✅ Company context provided in request body');
+      console.log('📋 Request body company context:', JSON.stringify(companyContext, null, 2));
+      
+      // Normalize the request format to match expected structure
+      companyProfile = {
+        company_name: companyContext.company_name || null,
+        industry: companyContext.industry || null,
+        website_purpose: companyContext.website_purpose || companyContext.type || null,
+        data_records_count: companyContext.data_records_count || null,
+        downtime_cost_per_hour: companyContext.downtime_cost_per_hour || null,
+        compliance_requirements: companyContext.compliance_requirements || [],
+        geographic_region: companyContext.geographic_region || companyContext.region || null,
+        // Additional fields from request that might be useful
+        annual_revenue: companyContext.annual_revenue || null,
+        employee_count: companyContext.employee_count || null
+      };
+      
+      console.log('\n✅ COMPANY PROFILE FROM REQUEST BODY:');
+      console.log('-'.repeat(60));
+      console.log(`   Company Name: ${companyProfile.company_name || 'N/A'}`);
+      console.log(`   Industry: ${companyProfile.industry || 'N/A'}`);
+      console.log(`   Website Purpose: ${companyProfile.website_purpose || 'N/A'}`);
+      console.log(`   Annual Revenue: ${companyProfile.annual_revenue ? '$' + companyProfile.annual_revenue.toLocaleString() : 'N/A'}`);
+      console.log(`   Employee Count: ${companyProfile.employee_count || 'N/A'}`);
+      console.log(`   Data Records Count: ${companyProfile.data_records_count || 'N/A'}`);
+      console.log(`   Downtime Cost/Hour: ${companyProfile.downtime_cost_per_hour ? '$' + companyProfile.downtime_cost_per_hour : 'N/A'}`);
+      console.log(`   Compliance Requirements: ${companyProfile.compliance_requirements?.join(', ') || 'None'}`);
+      console.log(`   Geographic Region: ${companyProfile.geographic_region || 'N/A'}`);
+      console.log('-'.repeat(60));
+      console.log(`📊 Normalized profile data:`, JSON.stringify(companyProfile, null, 2));
+      console.log('='.repeat(80));
+      console.log(`🏢 BUSINESS CONTEXT STATUS: LOADED FROM REQUEST BODY`);
+      console.log('='.repeat(80) + '\n');
+    } else {
+      // Priority 2: Fallback to database lookup
+      console.log('ℹ️  No company context in request body - checking database...');
+      console.log(`🔍 Looking up scan report ID: ${scanId}`);
+      
+      try {
+        const { data: scanReport, error: scanReportError } = await supabase
+          .from('scan_reports')
+          .select('company_profile_id')
+          .eq('id', scanId)
+          .single();
 
-      if (scanReportError) {
-        console.error('❌ Error fetching scan report:', scanReportError);
-        console.error('   Error details:', JSON.stringify(scanReportError, null, 2));
-      } else {
-        console.log('✅ Scan report fetched successfully');
-        console.log(`📋 Scan report data:`, JSON.stringify(scanReport, null, 2));
-        
-        if (scanReport?.company_profile_id) {
-          console.log(`\n🔗 Company profile ID found: ${scanReport.company_profile_id}`);
-          console.log(`📥 Fetching company profile from database...`);
-          
-          const { data: profile, error: profileError } = await supabase
-            .from('company_profiles')
-            .select('*')
-            .eq('id', scanReport.company_profile_id)
-            .single();
-          
-          if (profileError) {
-            console.error('❌ Error fetching company profile:', profileError);
-            console.error('   Error details:', JSON.stringify(profileError, null, 2));
-          } else if (profile) {
-            companyProfile = profile;
-            console.log('\n✅ COMPANY PROFILE LOADED SUCCESSFULLY:');
-            console.log('-'.repeat(60));
-            console.log(`   Company Name: ${companyProfile.company_name || 'N/A'}`);
-            console.log(`   Industry: ${companyProfile.industry || 'N/A'}`);
-            console.log(`   Website Purpose: ${companyProfile.website_purpose || 'N/A'}`);
-            console.log(`   Data Records Count: ${companyProfile.data_records_count || 'N/A'}`);
-            console.log(`   Downtime Cost/Hour: ${companyProfile.downtime_cost_per_hour ? '$' + companyProfile.downtime_cost_per_hour : 'N/A'}`);
-            console.log(`   Compliance Requirements: ${companyProfile.compliance_requirements?.join(', ') || 'None'}`);
-            console.log(`   Geographic Region: ${companyProfile.geographic_region || 'N/A'}`);
-            console.log('-'.repeat(60));
-            console.log(`📊 Full profile data:`, JSON.stringify(companyProfile, null, 2));
-          } else {
-            console.warn('⚠️ Company profile ID exists but profile not found in database');
-          }
+        if (scanReportError) {
+          console.error('❌ Error fetching scan report:', scanReportError);
+          console.error('   Error details:', JSON.stringify(scanReportError, null, 2));
         } else {
-          console.log('ℹ️  No company_profile_id found in scan report - business context will not be used');
-          console.log('   This is normal if no company profile was associated with this scan');
+          console.log('✅ Scan report fetched successfully');
+          console.log(`📋 Scan report data:`, JSON.stringify(scanReport, null, 2));
+          
+          if (scanReport?.company_profile_id) {
+            console.log(`\n🔗 Company profile ID found: ${scanReport.company_profile_id}`);
+            console.log(`📥 Fetching company profile from database...`);
+            
+            const { data: profile, error: profileError } = await supabase
+              .from('company_profiles')
+              .select('*')
+              .eq('id', scanReport.company_profile_id)
+              .single();
+            
+            if (profileError) {
+              console.error('❌ Error fetching company profile:', profileError);
+              console.error('   Error details:', JSON.stringify(profileError, null, 2));
+            } else if (profile) {
+              companyProfile = profile;
+              console.log('\n✅ COMPANY PROFILE LOADED FROM DATABASE:');
+              console.log('-'.repeat(60));
+              console.log(`   Company Name: ${companyProfile.company_name || 'N/A'}`);
+              console.log(`   Industry: ${companyProfile.industry || 'N/A'}`);
+              console.log(`   Website Purpose: ${companyProfile.website_purpose || 'N/A'}`);
+              console.log(`   Data Records Count: ${companyProfile.data_records_count || 'N/A'}`);
+              console.log(`   Downtime Cost/Hour: ${companyProfile.downtime_cost_per_hour ? '$' + companyProfile.downtime_cost_per_hour : 'N/A'}`);
+              console.log(`   Compliance Requirements: ${companyProfile.compliance_requirements?.join(', ') || 'None'}`);
+              console.log(`   Geographic Region: ${companyProfile.geographic_region || 'N/A'}`);
+              console.log('-'.repeat(60));
+              console.log(`📊 Full profile data:`, JSON.stringify(companyProfile, null, 2));
+            } else {
+              console.warn('⚠️ Company profile ID exists but profile not found in database');
+            }
+          } else {
+            console.log('ℹ️  No company_profile_id found in scan report - business context will not be used');
+            console.log('   This is normal if no company profile was associated with this scan');
+          }
         }
+      } catch (ctxError) {
+        console.error('❌ Exception while loading business context from database:', ctxError);
+        console.error('   Error message:', ctxError.message);
+        console.error('   Stack trace:', ctxError.stack);
       }
-    } catch (ctxError) {
-      console.error('❌ Exception while loading business context:', ctxError);
-      console.error('   Error message:', ctxError.message);
-      console.error('   Stack trace:', ctxError.stack);
+      
+      console.log('='.repeat(80));
+      console.log(`🏢 BUSINESS CONTEXT STATUS: ${companyProfile ? 'LOADED FROM DATABASE' : 'NOT AVAILABLE'}`);
+      console.log('='.repeat(80) + '\n');
     }
-    
-    console.log('='.repeat(80));
-    console.log(`🏢 BUSINESS CONTEXT STATUS: ${companyProfile ? 'LOADED' : 'NOT AVAILABLE'}`);
-    console.log('='.repeat(80) + '\n');
 
     await updateScanProgress(supabase, scanId, "running", 10, `Starting ${validScanners.length} scanner(s): ${validScanners.join(', ')}`);
 
