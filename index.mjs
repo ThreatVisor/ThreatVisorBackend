@@ -186,8 +186,9 @@ async function processAllVulnerabilitiesWithAI(allVulnerabilities, scanMetadata,
   console.log('🤖 AI PROCESSING STARTING - ENHANCED LOGGING');
   console.log('='.repeat(80));
 
-  // REDUCED BATCH SIZE to 1 to absolutely minimize token usage and prevent truncation
-  const BATCH_SIZE = 1;
+  // Optimized batch size: balance between efficiency and token limits
+  // Process 2-3 vulnerabilities per batch to reduce API calls while staying within token limits
+  const BATCH_SIZE = Math.min(3, Math.max(1, Math.floor(50 / allVulnerabilities.length) || 2));
   const batches = [];
   for (let i = 0; i < allVulnerabilities.length; i += BATCH_SIZE) {
     batches.push(allVulnerabilities.slice(i, i + BATCH_SIZE));
@@ -264,8 +265,14 @@ async function processAllVulnerabilitiesWithAI(allVulnerabilities, scanMetadata,
     apiKey: process.env.ANTHROPIC_API_KEY,
   });
 
-  // OPTIMIZED PROMPT: Explicitly requested conciseness to save tokens
-  const systemPrompt = "You are a senior cybersecurity analyst. Generate UNIQUE, detailed content. Never repeat text. Provide EXACTLY 3 specific remediation steps and 3 attack scenarios per vulnerability to ensure concise, high-value output. Focus on realistic security intelligence.";
+  // OPTIMIZED PROMPT: Enforce conciseness and JSON structure
+  const systemPrompt = `You are a senior cybersecurity analyst. CRITICAL RULES:
+1. Generate UNIQUE, detailed but CONCISE content (max 300 words per field)
+2. Provide EXACTLY 3 remediation steps and 3 attack scenarios per vulnerability
+3. Return ONLY valid JSON - no markdown, no explanations, no comments
+4. Keep attack scenarios to 150 words each, remediation steps to 100 words each
+5. Ensure JSON is complete and properly closed before ending response
+6. If approaching token limit, prioritize completing the JSON structure over verbose descriptions`;
 
   let allProcessedVulns = [];
   let mergedDuplicatesCount = 0;
@@ -436,78 +443,227 @@ Return ONLY valid JSON with no additional text or comments.`;
       console.log(`📏 Total prompt length: ${prompt.length} characters\n`);
     }
 
-    try {
-      const msg = await anthropic.messages.create({
-        model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929",
-        max_tokens: 4000,
-        temperature: 0.3,
-        system: systemPrompt,
-        messages: [
-          {
-            role: "user",
-            content: prompt
-          }
-        ]
-      });
-
-      let aiResponse = msg.content[0].text.trim();
-
-      // Clean markdown code blocks if present
-      if (aiResponse.includes('```json')) {
-        aiResponse = aiResponse.replace(/```json\n?|\n?```/g, '').trim();
-      } else if (aiResponse.includes('```')) {
-        aiResponse = aiResponse.replace(/```\n?|\n?```/g, '').trim();
-      }
-
-      // ROBUST JSON EXTRACTION
+    // Retry logic with exponential backoff
+    let parsedResponse = null;
+    let lastError = null;
+    const maxRetries = 3;
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
-        const jsonStart = aiResponse.indexOf('{');
-        const jsonEnd = aiResponse.lastIndexOf('}');
+        if (attempt > 0) {
+          const backoffMs = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+          console.log(`   🔄 Retry attempt ${attempt + 1}/${maxRetries} after ${backoffMs}ms backoff...`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+        }
+        
+        const msg = await anthropic.messages.create({
+          model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929",
+          max_tokens: 8000, // Increased to handle longer responses
+          temperature: 0.2, // Lower temperature for more consistent JSON
+          system: systemPrompt,
+          messages: [
+            {
+              role: "user",
+              content: prompt
+            }
+          ]
+        });
 
+        let aiResponse = msg.content[0].text.trim();
+        
+        // Check if response was truncated
+        if (msg.stop_reason === 'max_tokens') {
+          console.warn(`   ⚠️ Response may be truncated (max_tokens reached)`);
+        }
+
+        // Clean markdown code blocks if present
+        if (aiResponse.includes('```json')) {
+          aiResponse = aiResponse.replace(/```json\n?|\n?```/g, '').trim();
+        } else if (aiResponse.includes('```')) {
+          aiResponse = aiResponse.replace(/```\n?|\n?```/g, '').trim();
+        }
+
+        // IMPROVED JSON EXTRACTION - Find the largest valid JSON object
+        let jsonStart = aiResponse.indexOf('{');
+        let jsonEnd = aiResponse.lastIndexOf('}');
+        
+        // If no clear JSON boundaries, try to find them
+        if (jsonStart === -1 || jsonEnd === -1 || jsonEnd <= jsonStart) {
+          // Try to find JSON by looking for "summary" or "vulnerabilities" keys
+          const summaryMatch = aiResponse.match(/"summary"\s*:/);
+          const vulnsMatch = aiResponse.match(/"vulnerabilities"\s*:/);
+          
+          if (summaryMatch) {
+            jsonStart = summaryMatch.index - 1; // Go back to find opening brace
+            let braceCount = 0;
+            for (let i = jsonStart; i >= 0; i--) {
+              if (aiResponse[i] === '{') {
+                jsonStart = i;
+                break;
+              }
+            }
+          }
+          
+          if (vulnsMatch && jsonEnd === -1) {
+            // Find the closing brace for the root object containing vulnerabilities
+            let braceCount = 0;
+            let bracketCount = 0;
+            let inString = false;
+            let escapeNext = false;
+            let foundStart = false;
+            
+            for (let i = 0; i < aiResponse.length; i++) {
+              const char = aiResponse[i];
+              
+              if (escapeNext) {
+                escapeNext = false;
+                continue;
+              }
+              
+              if (char === '\\') {
+                escapeNext = true;
+                continue;
+              }
+              
+              if (char === '"' && !escapeNext) {
+                inString = !inString;
+                continue;
+              }
+              
+              if (!inString) {
+                if (char === '{') {
+                  braceCount++;
+                  foundStart = true;
+                }
+                if (char === '}') {
+                  braceCount--;
+                  if (foundStart && braceCount === 0 && bracketCount === 0) {
+                    jsonEnd = i;
+                    break;
+                  }
+                }
+                if (char === '[') bracketCount++;
+                if (char === ']') bracketCount--;
+              }
+            }
+          }
+        }
+        
         if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
           aiResponse = aiResponse.substring(jsonStart, jsonEnd + 1);
         }
-      } catch (extractError) {
-        console.warn('⚠️ Failed to extract JSON substring, attempting to parse original:', extractError);
-      }
 
-      let parsedResponse;
-      try {
-        parsedResponse = JSON.parse(aiResponse);
-      } catch (parseError) {
-        console.warn(`⚠️ Batch ${batchIndex + 1} JSON parse failed, attempting repair...`);
-        console.log('🔍 RAW AI RESPONSE (FAILED):', aiResponse); // ADDED LOGGING
-
-        // JSON REPAIR LOGIC
+        // IMPROVED JSON REPAIR with multiple strategies
         try {
-          // 1. Try to close open arrays/objects
-          let repaired = aiResponse.trim();
-          // Remove trailing comma if present
-          if (repaired.endsWith(',')) repaired = repaired.slice(0, -1);
+          parsedResponse = JSON.parse(aiResponse);
+        } catch (parseError) {
+          if (attempt < maxRetries - 1) {
+            console.warn(`⚠️ Batch ${batchIndex + 1} JSON parse failed (attempt ${attempt + 1}), will retry...`);
+            lastError = parseError;
+            continue; // Retry
+          }
+          
+          console.warn(`⚠️ Batch ${batchIndex + 1} JSON parse failed, attempting repair...`);
+          console.log(`🔍 Response length: ${aiResponse.length} chars`);
+          console.log(`🔍 First 500 chars: ${aiResponse.substring(0, 500)}`);
+          console.log(`🔍 Last 500 chars: ${aiResponse.substring(Math.max(0, aiResponse.length - 500))}`);
 
-          // Count braces/brackets
+          // Advanced JSON repair strategies
+          let repaired = aiResponse.trim();
+          
+          // Strategy 1: Remove trailing commas
+          repaired = repaired.replace(/,(\s*[}\]])/g, '$1');
+          
+          // Strategy 2: Close incomplete strings
+          repaired = repaired.replace(/"([^"]*)$/g, '"$1"');
+          
+          // Strategy 3: Count and balance braces/brackets
           const openBraces = (repaired.match(/\{/g) || []).length;
           const closeBraces = (repaired.match(/\}/g) || []).length;
           const openBrackets = (repaired.match(/\[/g) || []).length;
           const closeBrackets = (repaired.match(/\]/g) || []).length;
-
-          // Append missing closing characters
-          if (openBrackets > closeBrackets) repaired += ']'.repeat(openBrackets - closeBrackets);
-          if (openBraces > closeBraces) repaired += '}'.repeat(openBraces - closeBraces);
-
-          parsedResponse = JSON.parse(repaired);
-          console.log(`✅ Batch ${batchIndex + 1} repaired successfully`);
-        } catch (repairError) {
-          console.error(`❌ Batch ${batchIndex + 1} repair failed:`, repairError);
-          throw parseError; // Throw original error if repair fails
+          
+          // Strategy 4: Find incomplete arrays/objects and close them
+          let depth = 0;
+          let inString = false;
+          let escapeNext = false;
+          let lastValidPos = repaired.length - 1;
+          
+          for (let i = 0; i < repaired.length; i++) {
+            const char = repaired[i];
+            
+            if (escapeNext) {
+              escapeNext = false;
+              continue;
+            }
+            
+            if (char === '\\') {
+              escapeNext = true;
+              continue;
+            }
+            
+            if (char === '"' && !escapeNext) {
+              inString = !inString;
+              continue;
+            }
+            
+            if (!inString) {
+              if (char === '{' || char === '[') depth++;
+              if (char === '}' || char === ']') depth--;
+              
+              if (depth === 0 && (char === '}' || char === ']')) {
+                lastValidPos = i;
+              }
+            }
+          }
+          
+          // If we found a valid position, truncate there
+          if (lastValidPos < repaired.length - 1 && depth > 0) {
+            repaired = repaired.substring(0, lastValidPos + 1);
+            // Close remaining open structures
+            while (depth > 0) {
+              repaired += '}';
+              depth--;
+            }
+          } else {
+            // Append missing closing characters
+            if (openBrackets > closeBrackets) repaired += ']'.repeat(openBrackets - closeBrackets);
+            if (openBraces > closeBraces) repaired += '}'.repeat(openBraces - closeBraces);
+          }
+          
+          // Strategy 5: Fix incomplete array/object items
+          // Remove trailing incomplete items in arrays
+          repaired = repaired.replace(/,\s*"[^"]*$/, '');
+          repaired = repaired.replace(/,\s*\{[^}]*$/, '');
+          
+          try {
+            parsedResponse = JSON.parse(repaired);
+            console.log(`✅ Batch ${batchIndex + 1} repaired successfully`);
+          } catch (repairError) {
+            console.error(`❌ Batch ${batchIndex + 1} repair failed:`, repairError.message);
+            // Last resort: try to extract just the vulnerabilities array
+            const vulnsMatch = repaired.match(/"vulnerabilities"\s*:\s*\[([\s\S]*)\]/);
+            if (vulnsMatch) {
+              try {
+                const vulnsJson = `{"summary": {"total_unique_vulnerabilities": ${currentBatch.length}, "duplicates_merged": 0, "overall_risk_assessment": "Analysis incomplete due to parsing error"}, "vulnerabilities": [${vulnsMatch[1]}]}`;
+                parsedResponse = JSON.parse(vulnsJson);
+                console.log(`⚠️ Batch ${batchIndex + 1} partial recovery: extracted vulnerabilities array only`);
+              } catch (partialError) {
+                throw repairError; // Give up
+              }
+            } else {
+              throw repairError;
+            }
+          }
         }
-      }
+        
+        // Success - break out of retry loop
+        break;
 
-      if (parsedResponse.vulnerabilities) {
-        // Merge original batch data (CVE/CWE/WASC IDs) with AI response
-        const enrichedVulns = parsedResponse.vulnerabilities.map((aiVuln, idx) => {
-          // Since BATCH_SIZE is 1, we can safely access currentBatch[0]
-          const originalVuln = currentBatch[idx] || currentBatch[0];
+    if (parsedResponse && parsedResponse.vulnerabilities) {
+      // Merge original batch data (CVE/CWE/WASC IDs) with AI response
+      const enrichedVulns = parsedResponse.vulnerabilities.map((aiVuln, idx) => {
+        const originalVuln = currentBatch[idx] || currentBatch[0];
           
           // Merge IDs: prefer AI response, fallback to original
           if (!aiVuln.cve_ids || (Array.isArray(aiVuln.cve_ids) && aiVuln.cve_ids.length === 0)) {
@@ -527,20 +683,89 @@ Return ONLY valid JSON with no additional text or comments.`;
             console.log(`   📋 Restored WASC ID from original data: ${aiVuln.wasc_id}`);
           }
           
-          return aiVuln;
-        });
+        return aiVuln;
+      });
+      
+      allProcessedVulns.push(...enrichedVulns);
+    }
+    if (parsedResponse && parsedResponse.summary && parsedResponse.summary.duplicates_merged) {
+      mergedDuplicatesCount += parsedResponse.summary.duplicates_merged || 0;
+    }
+
+        console.log(`✅ Batch ${batchIndex + 1} success: ${parsedResponse.vulnerabilities?.length || 0} vulns processed`);
+        break; // Success, exit retry loop
         
-        allProcessedVulns.push(...enrichedVulns);
+      } catch (batchError) {
+        lastError = batchError;
+        if (attempt === maxRetries - 1) {
+          console.error(`❌ Batch ${batchIndex + 1} failed after ${maxRetries} attempts:`, batchError.message);
+          // Create fallback response to continue processing
+          parsedResponse = {
+            summary: {
+              total_unique_vulnerabilities: currentBatch.length,
+              duplicates_merged: 0,
+              overall_risk_assessment: `Analysis failed for batch ${batchIndex + 1}: ${batchError.message}`
+            },
+            vulnerabilities: currentBatch.map(v => ({
+              ...v,
+              ai_security_analysis: `Analysis unavailable: ${batchError.message}`,
+              business_impact: "Unable to generate business impact analysis",
+              technical_impact: "Unable to generate technical impact analysis",
+              solution_summary: v.solution || "Review vulnerability and apply recommended fixes",
+              attack_scenarios: [],
+              detailed_remediation_steps: v.remediation_steps || ["Review and remediate vulnerability"],
+              scanners_detected: [v.scanner],
+              severity: v.severity,
+              exploit_difficulty: "unknown",
+              impact_score: calculateRiskLevel(v.severity, v.confidence),
+              cvss_vector: "",
+              cvss_score: 0,
+              false_positive_likelihood: "Unknown",
+              false_positive_reasoning: "Unable to assess",
+              compliance_controls: [],
+              remediation_priority: v.severity === 'critical' || v.severity === 'high' ? 'high' : 'medium'
+            }))
+          };
+        }
       }
-      if (parsedResponse.summary && parsedResponse.summary.duplicates_merged) {
-        mergedDuplicatesCount += parsedResponse.summary.duplicates_merged;
-      }
-
-      console.log(`✅ Batch ${batchIndex + 1} success: ${parsedResponse.vulnerabilities?.length || 0} vulns processed`);
-
-    } catch (batchError) {
-      console.error(`❌ Batch ${batchIndex + 1} failed:`, batchError);
-      // Continue to next batch, don't fail entire scan
+    }
+    
+    if (!parsedResponse) {
+      console.error(`❌ Batch ${batchIndex + 1} completely failed, skipping...`);
+      continue; // Skip to next batch
+    }
+    
+    // Process successful response
+    if (parsedResponse && parsedResponse.vulnerabilities) {
+      // Merge original batch data (CVE/CWE/WASC IDs) with AI response
+      const enrichedVulns = parsedResponse.vulnerabilities.map((aiVuln, idx) => {
+        const originalVuln = currentBatch[idx] || currentBatch[0];
+        
+        // Merge IDs: prefer AI response, fallback to original
+        if (!aiVuln.cve_ids || (Array.isArray(aiVuln.cve_ids) && aiVuln.cve_ids.length === 0)) {
+          if (originalVuln && originalVuln.cve_ids && originalVuln.cve_ids.length > 0) {
+            aiVuln.cve_ids = originalVuln.cve_ids;
+            console.log(`   📋 Restored CVE IDs from original data: ${aiVuln.cve_ids.join(', ')}`);
+          }
+        }
+        
+        if (!aiVuln.cwe_id && originalVuln && originalVuln.cwe_id) {
+          aiVuln.cwe_id = originalVuln.cwe_id;
+          console.log(`   📋 Restored CWE ID from original data: ${aiVuln.cwe_id}`);
+        }
+        
+        if (!aiVuln.wasc_id && originalVuln && originalVuln.wasc_id) {
+          aiVuln.wasc_id = originalVuln.wasc_id;
+          console.log(`   📋 Restored WASC ID from original data: ${aiVuln.wasc_id}`);
+        }
+        
+        return aiVuln;
+      });
+      
+      allProcessedVulns.push(...enrichedVulns);
+    }
+    if (parsedResponse && parsedResponse.summary && parsedResponse.summary.duplicates_merged) {
+      mergedDuplicatesCount += parsedResponse.summary.duplicates_merged || 0;
     }
   }
 
