@@ -64,6 +64,42 @@ const SCANNERS = {
     reportFile: 'w3af_report.txt',
     reportFormat: 'txt',
     containerWorkDir: '/app/reports'
+  },
+  nmap: {
+    name: 'Nmap',
+    containerName: 'instrumentisto/nmap:latest',
+    reportFile: 'nmap_report.json',
+    reportFormat: 'json',
+    containerWorkDir: '/tmp/reports',
+    layer: 'network',
+    scanner_category: 'network'
+  },
+  trivy: {
+    name: 'Trivy',
+    containerName: 'aquasec/trivy:latest',
+    reportFile: 'trivy_report.json',
+    reportFormat: 'json',
+    containerWorkDir: '/tmp/reports',
+    layer: 'container',
+    scanner_category: 'container'
+  },
+  wazuh: {
+    name: 'Wazuh',
+    containerName: null, // API-based, no container
+    reportFile: 'wazuh_report.json',
+    reportFormat: 'json',
+    containerWorkDir: '/tmp/reports',
+    layer: 'infrastructure',
+    scanner_category: 'infrastructure'
+  },
+  testssl: {
+    name: 'testssl.sh',
+    containerName: 'drwetter/testssl.sh:latest',
+    reportFile: 'testssl_report.json',
+    reportFormat: 'json',
+    containerWorkDir: '/tmp/reports',
+    layer: 'network',
+    scanner_category: 'network'
   }
 };
 
@@ -239,6 +275,21 @@ ${JSON.stringify(currentBatch.map(v => ({
       severity: v.severity,
       description: v.description,
       url: v.url,
+      cve_ids: v.cve_ids || [],
+      cwe_id: v.cwe_id || null,
+      wasc_id: v.wasc_id || null,
+      // Multi-layer fields
+      layer: v.layer || null,
+      scanner_category: v.scanner_category || null,
+      asset_type: v.asset_type || null,
+      asset_identifier: v.asset_identifier || null,
+      hostname: v.hostname || null,
+      ip_address: v.ip_address || null,
+      port: v.port || null,
+      service: v.service || null,
+      package_name: v.package_name || null,
+      installed_version: v.installed_version || null,
+      fixed_version: v.fixed_version || null,
       raw_output: v.raw_output ? v.raw_output.substring(0, 200) + '...' : 'N/A'
     })), null, 2)}
 
@@ -246,9 +297,14 @@ ${JSON.stringify(currentBatch.map(v => ({
 
 1. **UNIQUE CONTENT**: Every field must contain completely different, specific content.
 
-2. **CONCISE SCENARIOS**: Provide exactly 3 step-by-step attack scenarios.
+2. **PRESERVE VULNERABILITY IDENTIFIERS**: 
+   - **CVE IDs**: Preserve all CVE IDs from the input data in the cve_ids array. If multiple vulnerabilities are merged, include all CVE IDs from all merged vulnerabilities.
+   - **CWE ID**: Preserve the CWE ID from input data. If multiple vulnerabilities are merged, use the most relevant CWE ID.
+   - **WASC ID**: Preserve the WASC ID from input data. If multiple vulnerabilities are merged, use the most relevant WASC ID.
 
-3. **ENTERPRISE RISK METRICS**:
+3. **CONCISE SCENARIOS**: Provide exactly 3 step-by-step attack scenarios.
+
+4. **ENTERPRISE RISK METRICS**:
    - **CVSS v3.1 Vector**: Generate a precise CVSS v3.1 vector string.
    - **False Positive Assessment**: Analyze likelihood (Low/Medium/High).
    - **Compliance Mapping**: Map to specific controls (PCI DSS, HIPAA, etc.).
@@ -326,7 +382,21 @@ Process these ${currentBatch.length} vulnerabilities and return detailed analysi
       "cvss_score": number,
       "false_positive_likelihood": "Low|Medium|High",
       "false_positive_reasoning": "string",
-      "compliance_controls": ["string"]
+      "compliance_controls": ["string"],
+      "cve_ids": ["CVE-2024-1234", "CVE-2024-5678"] or [],
+      "cwe_id": number or null,
+      "wasc_id": number or null,
+      "layer": "web" | "network" | "infrastructure" | "container",
+      "scanner_category": "web_app" | "network" | "infrastructure" | "container",
+      "asset_type": "url" | "ip_address" | "hostname" | "container_image",
+      "asset_identifier": "string",
+      "hostname": "string" or null,
+      "ip_address": "string" or null,
+      "port": number or null,
+      "service": "string" or null,
+      "package_name": "string" or null,
+      "installed_version": "string" or null,
+      "fixed_version": "string" or null
     }
   ]
 }
@@ -415,7 +485,33 @@ Return ONLY valid JSON with no additional text or comments.`;
       }
 
       if (parsedResponse.vulnerabilities) {
-        allProcessedVulns.push(...parsedResponse.vulnerabilities);
+        // Merge original batch data (CVE/CWE/WASC IDs) with AI response
+        const enrichedVulns = parsedResponse.vulnerabilities.map((aiVuln, idx) => {
+          // Since BATCH_SIZE is 1, we can safely access currentBatch[0]
+          const originalVuln = currentBatch[idx] || currentBatch[0];
+          
+          // Merge IDs: prefer AI response, fallback to original
+          if (!aiVuln.cve_ids || (Array.isArray(aiVuln.cve_ids) && aiVuln.cve_ids.length === 0)) {
+            if (originalVuln && originalVuln.cve_ids && originalVuln.cve_ids.length > 0) {
+              aiVuln.cve_ids = originalVuln.cve_ids;
+              console.log(`   📋 Restored CVE IDs from original data: ${aiVuln.cve_ids.join(', ')}`);
+            }
+          }
+          
+          if (!aiVuln.cwe_id && originalVuln && originalVuln.cwe_id) {
+            aiVuln.cwe_id = originalVuln.cwe_id;
+            console.log(`   📋 Restored CWE ID from original data: ${aiVuln.cwe_id}`);
+          }
+          
+          if (!aiVuln.wasc_id && originalVuln && originalVuln.wasc_id) {
+            aiVuln.wasc_id = originalVuln.wasc_id;
+            console.log(`   📋 Restored WASC ID from original data: ${aiVuln.wasc_id}`);
+          }
+          
+          return aiVuln;
+        });
+        
+        allProcessedVulns.push(...enrichedVulns);
       }
       if (parsedResponse.summary && parsedResponse.summary.duplicates_merged) {
         mergedDuplicatesCount += parsedResponse.summary.duplicates_merged;
@@ -577,6 +673,33 @@ async function processAllVulnerabilitiesUnified(allVulnerabilities, scanResults,
       });
     }
 
+    // Extract CVE/CWE/WASC IDs from AI response
+    // CVE can be an array, so we'll take the first one or join them
+    let cveId = null;
+    if (vuln.cve_ids && Array.isArray(vuln.cve_ids) && vuln.cve_ids.length > 0) {
+      // Use first CVE ID, or join if multiple (database might need single value)
+      cveId = vuln.cve_ids[0];
+      if (vuln.cve_ids.length > 1) {
+        console.log(`📋 Multiple CVE IDs found: ${vuln.cve_ids.join(', ')}, using first: ${cveId}`);
+      }
+    } else if (vuln.cve_id) {
+      // Handle single CVE ID string
+      cveId = vuln.cve_id;
+    }
+
+    const cweId = safeIntOrNull(vuln.cwe_id);
+    const wascId = safeIntOrNull(vuln.wasc_id);
+
+    // Log CVE/CWE/WASC IDs
+    console.log(`🔖 Vulnerability Identifiers:`);
+    console.log(`   CVE: ${cveId || 'None'}`);
+    console.log(`   CWE: ${cweId || 'None'}`);
+    console.log(`   WASC: ${wascId || 'None'}`);
+
+    // Determine layer and scanner_category from vulnerability data or default based on scanner
+    const layer = vuln.layer || (vuln.scanners_detected?.[0] ? SCANNERS[vuln.scanners_detected[0]]?.layer || 'web' : 'web');
+    const scannerCategory = vuln.scanner_category || (vuln.scanners_detected?.[0] ? SCANNERS[vuln.scanners_detected[0]]?.scanner_category || 'web_app' : 'web_app');
+
     const dbVuln = {
       scan_report_id: scanId,
       scanner_name: vuln.scanners_detected?.join(',') || 'unknown',
@@ -585,8 +708,8 @@ async function processAllVulnerabilitiesUnified(allVulnerabilities, scanResults,
       title: vuln.title,
       description: vuln.main_description,
       url: vuln.urls_affected?.[0] || '',
-      cwe_id: safeIntOrNull(vuln.cwe_id),
-      wasc_id: safeIntOrNull(vuln.wasc_id),
+      cwe_id: cweId,
+      wasc_id: wascId,
       solution: vuln.solution_summary,
       confidence: vuln.confidence,
       risk_level: vuln.impact_score,
@@ -609,8 +732,23 @@ async function processAllVulnerabilitiesUnified(allVulnerabilities, scanResults,
       remediation_priority: vuln.remediation_priority,
       scanner_correlation: JSON.stringify(vuln.evidence),
 
-      // CVE ID
-      cve_id: null
+      // CVE ID - store first CVE if available
+      cve_id: cveId,
+
+      // Multi-layer fields - CRITICAL: Must match TypeScript interface exactly
+      layer: layer,
+      scanner_category: scannerCategory,
+      asset_type: vuln.asset_type || (layer === 'web' ? 'url' : layer === 'network' ? 'ip_address' : layer === 'container' ? 'container_image' : 'hostname'),
+      asset_identifier: vuln.asset_identifier || vuln.url || vuln.hostname || '',
+      
+      // Optional layer-specific fields (include if present)
+      hostname: vuln.hostname || null,
+      ip_address: vuln.ip_address || null,
+      port: vuln.port ? safeIntOrNull(vuln.port) : null,
+      service: vuln.service || null,
+      package_name: vuln.package_name || null,
+      installed_version: vuln.installed_version || null,
+      fixed_version: vuln.fixed_version || null
     };
 
     console.log(`✅ Database vulnerability ${i + 1} scanner_name: ${dbVuln.scanner_name}`);
@@ -640,6 +778,26 @@ async function updateScanProgress(supabase, scanId, status, progress, message = 
     console.log(`📊 Updated scan ${scanId}: ${status} (${progress}%)`);
   } catch (error) {
     console.error('❌ Failed to update progress:', error);
+  }
+}
+
+// Pre-populate Trivy cache to speed up first scan
+async function prepopulateTrivyCache() {
+  try {
+    console.log('🔄 Pre-populating Trivy vulnerability database cache...');
+    const cmd = 'docker run --rm -v trivy-cache:/root/.cache/trivy aquasec/trivy:latest image --download-db-only';
+    
+    exec(cmd, { timeout: 120000 }, (err, stdout, stderr) => {
+      if (err) {
+        console.warn('⚠️ Trivy cache pre-population failed (non-critical):', err.message);
+        console.warn('   First Trivy scan may be slower');
+      } else {
+        console.log('✅ Trivy cache pre-populated successfully');
+        console.log('   First Trivy scan will be faster');
+      }
+    });
+  } catch (error) {
+    console.warn('⚠️ Trivy cache pre-population error (non-critical):', error.message);
   }
 }
 
@@ -854,6 +1012,119 @@ if __name__ == "__main__":
     '--entrypoint python3',
     scanner.containerName,
     '/scripts/w3af_scan.py'
+  ];
+
+  return { command: cmd.join(' '), reportHostPath };
+}
+
+function buildNmapCommand(target, scanner, options = {}) {
+  const reportHostPath = path.join(reportsDir, scanner.reportFile);
+  const containerReportPath = `${scanner.containerWorkDir}/${scanner.reportFile}`;
+
+  const scriptPath = path.join(scriptsDir, 'nmap_scan.py');
+  fs.chmodSync(scriptPath, 0o755);
+
+  const scanType = options.scan_type || 'quick';
+  
+  const cmd = [
+    'docker run --rm',
+    '--network host', // Nmap needs host network for scanning
+    `-v ${reportsDir}:${scanner.containerWorkDir}:rw`,
+    `-v ${scriptsDir}:/scripts:ro`,
+    '-e', `TARGET=${target}`,
+    '-e', `SCAN_TYPE=${scanType}`,
+    '-e', `OUTPUT_PATH=${containerReportPath}`,
+    '--entrypoint python3',
+    scanner.containerName,
+    '/scripts/nmap_scan.py',
+    target,
+    scanType
+  ];
+
+  return { command: cmd.join(' '), reportHostPath };
+}
+
+function buildTrivyCommand(target, scanner, options = {}) {
+  const reportHostPath = path.join(reportsDir, scanner.reportFile);
+  const containerReportPath = `${scanner.containerWorkDir}/${scanner.reportFile}`;
+
+  const scriptPath = path.join(scriptsDir, 'trivy_scan.py');
+  fs.chmodSync(scriptPath, 0o755);
+
+  const severity = options.severity_filter || 'CRITICAL,HIGH,MEDIUM';
+  const scanType = options.scan_type || 'vuln';
+  
+  const cmd = [
+    'docker run --rm',
+    `-v ${reportsDir}:${scanner.containerWorkDir}:rw`,
+    `-v ${scriptsDir}:/scripts:ro`,
+    `-v trivy-cache:/root/.cache/trivy`, // Cache volume for faster scans
+    '-e', `IMAGE=${target}`,
+    '-e', `SEVERITY_FILTER=${severity}`,
+    '-e', `SCAN_TYPE=${scanType}`,
+    '-e', `OUTPUT_PATH=${containerReportPath}`,
+    '--entrypoint python3',
+    scanner.containerName,
+    '/scripts/trivy_scan.py',
+    target
+  ];
+
+  return { command: cmd.join(' '), reportHostPath };
+}
+
+function buildWazuhCommand(target, scanner, options = {}) {
+  const reportHostPath = path.join(reportsDir, scanner.reportFile);
+  
+  // Wazuh doesn't use Docker - direct Python execution
+  const scriptPath = path.join(scriptsDir, 'wazuh_scan.py');
+  fs.chmodSync(scriptPath, 0o755);
+
+  const credentials = options.wazuhCredentials || {};
+  const apiUrl = credentials.api_url || '';
+  const username = credentials.username || '';
+  const password = credentials.password || '';
+  const verifySsl = credentials.verify_ssl || false;
+
+  // Build Python command with environment variables
+  const cmd = [
+    'python3',
+    scriptPath
+  ];
+
+  // Set environment variables for the Python script
+  const envVars = {
+    WAZUH_API_URL: apiUrl,
+    WAZUH_USERNAME: username,
+    WAZUH_PASSWORD: password,
+    WAZUH_VERIFY_SSL: verifySsl.toString(),
+    OUTPUT_PATH: reportHostPath
+  };
+
+  return { 
+    command: cmd.join(' '), 
+    reportHostPath,
+    envVars, // Return env vars separately for exec
+    isDirectPython: true // Flag to indicate direct Python execution
+  };
+}
+
+function buildTestsslCommand(target, scanner, options = {}) {
+  const reportHostPath = path.join(reportsDir, scanner.reportFile);
+  const containerReportPath = `${scanner.containerWorkDir}/${scanner.reportFile}`;
+
+  const scriptPath = path.join(scriptsDir, 'testssl_scan.py');
+  fs.chmodSync(scriptPath, 0o755);
+
+  const cmd = [
+    'docker run --rm',
+    `-v ${reportsDir}:${scanner.containerWorkDir}:rw`,
+    `-v ${scriptsDir}:/scripts:ro`,
+    '-e', `TARGET=${target}`,
+    '-e', `OUTPUT_PATH=${containerReportPath}`,
+    '--entrypoint python3',
+    scanner.containerName,
+    '/scripts/testssl_scan.py',
+    target
   ];
 
   return { command: cmd.join(' '), reportHostPath };
@@ -1146,24 +1417,240 @@ function parseW3afReport(reportText) {
   });
 }
 
+function parseNmapReport(rawReport) {
+  const vulnerabilities = rawReport?.vulnerabilities || [];
+
+  if (vulnerabilities.length === 0) {
+    return [{
+      scanner: 'nmap',
+      title: 'Nmap Network Scan Completed',
+      description: 'Nmap network scan completed - no security issues detected',
+      severity: 'info',
+      url: rawReport?.target || '',
+      cve_ids: [],
+      cwe_id: null,
+      wasc_id: null,
+      solution: 'Continue regular network security monitoring',
+      confidence: 'medium',
+      plugin_id: null,
+      raw_output: 'Nmap scan completed',
+      layer: 'network',
+      scanner_category: 'network',
+      asset_type: 'ip_address',
+      asset_identifier: rawReport?.target || ''
+    }];
+  }
+
+  return vulnerabilities.map(vuln => ({
+    scanner: 'nmap',
+    title: vuln.title || 'Network Security Finding',
+    description: vuln.description || 'Network security issue detected',
+    severity: mapGenericSeverityToLevel(vuln.severity || 'medium'),
+    url: vuln.url || '',
+    cve_ids: [],
+    cwe_id: null,
+    wasc_id: null,
+    solution: vuln.solution || 'Review network service configuration',
+    confidence: vuln.confidence || 'medium',
+    plugin_id: null,
+    raw_output: vuln.description || vuln.title,
+    // Network-specific fields
+    layer: vuln.layer || 'network',
+    scanner_category: vuln.scanner_category || 'network',
+    asset_type: vuln.asset_type || 'ip_address',
+    asset_identifier: vuln.asset_identifier || vuln.ip_address || '',
+    hostname: vuln.hostname || null,
+    ip_address: vuln.ip_address || null,
+    port: vuln.port || null,
+    service: vuln.service || null
+  }));
+}
+
+function parseTrivyReport(rawReport) {
+  const vulnerabilities = rawReport?.vulnerabilities || [];
+
+  if (vulnerabilities.length === 0) {
+    return [{
+      scanner: 'trivy',
+      title: 'Trivy Container Scan Completed',
+      description: 'Trivy container scan completed - no vulnerabilities detected',
+      severity: 'info',
+      url: rawReport?.target || '',
+      cve_ids: [],
+      cwe_id: null,
+      wasc_id: null,
+      solution: 'Continue regular container security monitoring',
+      confidence: 'medium',
+      plugin_id: null,
+      raw_output: 'Trivy scan completed',
+      layer: 'container',
+      scanner_category: 'container',
+      asset_type: 'container_image',
+      asset_identifier: rawReport?.target || ''
+    }];
+  }
+
+  return vulnerabilities.map(vuln => ({
+    scanner: 'trivy',
+    title: vuln.title || 'Container Vulnerability',
+    description: vuln.description || 'Container security issue detected',
+    severity: mapGenericSeverityToLevel(vuln.severity || 'medium'),
+    url: vuln.url || '',
+    cve_ids: vuln.cve_ids || (vuln.cve_id ? [vuln.cve_id] : []),
+    cwe_id: null,
+    wasc_id: null,
+    solution: vuln.solution || 'Update container image dependencies',
+    confidence: vuln.confidence || 'high',
+    plugin_id: null,
+    raw_output: vuln.description || vuln.title,
+    // Container-specific fields
+    layer: vuln.layer || 'container',
+    scanner_category: vuln.scanner_category || 'container',
+    asset_type: vuln.asset_type || 'container_image',
+    asset_identifier: vuln.asset_identifier || vuln.url?.replace('container://', '') || '',
+    package_name: vuln.package_name || null,
+    installed_version: vuln.installed_version || null,
+    fixed_version: vuln.fixed_version || null
+  }));
+}
+
+function parseWazuhReport(rawReport) {
+  const vulnerabilities = rawReport?.vulnerabilities || [];
+
+  if (vulnerabilities.length === 0) {
+    return [{
+      scanner: 'wazuh',
+      title: 'Wazuh Infrastructure Scan Completed',
+      description: 'Wazuh infrastructure scan completed - no vulnerabilities detected',
+      severity: 'info',
+      url: '',
+      cve_ids: [],
+      cwe_id: null,
+      wasc_id: null,
+      solution: 'Continue regular infrastructure security monitoring',
+      confidence: 'medium',
+      plugin_id: null,
+      raw_output: 'Wazuh scan completed',
+      layer: 'infrastructure',
+      scanner_category: 'infrastructure',
+      asset_type: 'hostname',
+      asset_identifier: ''
+    }];
+  }
+
+  return vulnerabilities.map(vuln => ({
+    scanner: 'wazuh',
+    title: vuln.title || 'Infrastructure Vulnerability',
+    description: vuln.description || 'OS-level vulnerability detected',
+    severity: mapGenericSeverityToLevel(vuln.severity || 'medium'),
+    url: vuln.url || '',
+    cve_ids: vuln.cve_ids || (vuln.cve_id ? [vuln.cve_id] : []),
+    cwe_id: null,
+    wasc_id: null,
+    solution: vuln.solution || 'Update system packages',
+    confidence: vuln.confidence || 'high',
+    plugin_id: null,
+    raw_output: vuln.description || vuln.title,
+    // Infrastructure-specific fields
+    layer: vuln.layer || 'infrastructure',
+    scanner_category: vuln.scanner_category || 'infrastructure',
+    asset_type: vuln.asset_type || 'hostname',
+    asset_identifier: vuln.asset_identifier || vuln.hostname || '',
+    hostname: vuln.hostname || null,
+    ip_address: vuln.ip_address || null,
+    package_name: vuln.package_name || null,
+    installed_version: vuln.installed_version || null
+  }));
+}
+
+function parseTestsslReport(rawReport) {
+  const vulnerabilities = rawReport?.vulnerabilities || [];
+
+  if (vulnerabilities.length === 0) {
+    return [{
+      scanner: 'testssl',
+      title: 'SSL/TLS Scan Completed',
+      description: 'SSL/TLS scan completed - no issues detected',
+      severity: 'info',
+      url: rawReport?.target ? `https://${rawReport.target}` : '',
+      cve_ids: [],
+      cwe_id: null,
+      wasc_id: null,
+      solution: 'Continue regular SSL/TLS monitoring',
+      confidence: 'medium',
+      plugin_id: null,
+      raw_output: 'testssl scan completed',
+      layer: 'network',
+      scanner_category: 'network',
+      asset_type: 'hostname',
+      asset_identifier: rawReport?.target || ''
+    }];
+  }
+
+  return vulnerabilities.map(vuln => ({
+    scanner: 'testssl',
+    title: vuln.title || 'SSL/TLS Issue',
+    description: vuln.description || 'SSL/TLS configuration issue detected',
+    severity: mapGenericSeverityToLevel(vuln.severity || 'medium'),
+    url: vuln.url || '',
+    cve_ids: [],
+    cwe_id: null,
+    wasc_id: null,
+    solution: vuln.solution || 'Update SSL/TLS configuration',
+    confidence: vuln.confidence || 'high',
+    plugin_id: null,
+    raw_output: vuln.description || vuln.title,
+    // Network-specific fields
+    layer: vuln.layer || 'network',
+    scanner_category: vuln.scanner_category || 'network',
+    asset_type: vuln.asset_type || 'hostname',
+    asset_identifier: vuln.asset_identifier || vuln.hostname || '',
+    hostname: vuln.hostname || null
+  }));
+}
+
 // MAIN MULTI-SCAN ENDPOINT with Enhanced Logging
 app.post('/multi-scan', async (req, res) => {
-  const { target, scanId, supabaseUrl, supabaseKey, scanners = ['zap'], zapOptions = { ajaxSpider: false }, companyContext } = req.body;
+  const { 
+    target, 
+    scanId, 
+    supabaseUrl, 
+    supabaseKey, 
+    scanners = ['zap'], 
+    scan_type = 'web_application',
+    zapOptions = { ajaxSpider: false },
+    nmapOptions = {},
+    trivyOptions = {},
+    wazuhCredentials = null,
+    testsslOptions = {},
+    companyContext 
+  } = req.body;
 
   console.log('\n' + '🚀 MULTI-SCAN REQUEST RECEIVED');
   console.log('='.repeat(60));
   console.log('🎯 Target:', target);
   console.log('🆔 Scan ID:', scanId);
   console.log('🔧 Selected scanners:', scanners);
+  console.log('📋 Scan Type:', scan_type);
   console.log('⚙️ ZAP options:', zapOptions);
+  console.log('⚙️ Nmap options:', nmapOptions);
+  console.log('⚙️ Trivy options:', trivyOptions);
+  console.log('⚙️ Wazuh credentials:', wazuhCredentials ? 'PROVIDED' : 'NOT PROVIDED');
+  console.log('⚙️ testssl options:', testsslOptions);
   console.log('🏢 Company Context in Request:', companyContext ? 'YES' : 'NO');
   if (companyContext) {
     console.log('   Company Context Preview:', JSON.stringify(companyContext, null, 2));
   }
   console.log('='.repeat(60));
 
-  if (!target || typeof target !== "string" || !target.startsWith('http')) {
-    return res.status(400).json({ error: 'Invalid target URL' });
+  // Validate target - allow non-HTTP targets for network/container scans
+  if (!target || typeof target !== "string") {
+    return res.status(400).json({ error: 'Invalid target' });
+  }
+  
+  // Only require HTTP for web application scans
+  if (scan_type === 'web_application' && !target.startsWith('http')) {
+    return res.status(400).json({ error: 'Invalid target URL for web application scan' });
   }
 
   if (!scanId || !supabaseUrl || !supabaseKey) {
@@ -1298,6 +1785,7 @@ app.post('/multi-scan', async (req, res) => {
 
     const allVulnerabilities = [];
     const scanResults = {};
+    const failedScanners = []; // Track failed scanners for partial failure support
 
     console.log('\n🎯 PHASE 1: Executing individual scanners...');
     console.log('='.repeat(60));
@@ -1308,7 +1796,14 @@ app.post('/multi-scan', async (req, res) => {
 
       console.log(`🔄 Running ${scanner.name} (${i + 1}/${validScanners.length})`);
       const baseProgress = 10 + (i * 30 / validScanners.length);
-      await updateScanProgress(supabase, scanId, "running", Math.round(baseProgress), `Running ${scanner.name} scan...`);
+      const completedScanners = i;
+      await updateScanProgress(
+        supabase, 
+        scanId, 
+        "running", 
+        Math.round(baseProgress), 
+        `Completed ${completedScanners}/${validScanners.length} scanners - Running ${scanner.name} scan...`
+      );
 
       try {
         let cmdData;
@@ -1328,28 +1823,67 @@ app.post('/multi-scan', async (req, res) => {
           case 'w3af':
             cmdData = buildW3afCommand(target, scanner);
             break;
+          case 'nmap':
+            cmdData = buildNmapCommand(target, scanner, nmapOptions);
+            break;
+          case 'trivy':
+            cmdData = buildTrivyCommand(target, scanner, trivyOptions);
+            break;
+          case 'wazuh':
+            if (!wazuhCredentials) {
+              throw new Error('Wazuh credentials required but not provided');
+            }
+            cmdData = buildWazuhCommand(target, scanner, { wazuhCredentials });
+            break;
+          case 'testssl':
+            cmdData = buildTestsslCommand(target, scanner, testsslOptions);
+            break;
           default:
             throw new Error(`Unknown scanner: ${scannerName}`);
         }
 
         console.log(`⚙️ Executing ${scanner.name}:`, cmdData.command);
 
-        const executionResult = await new Promise((resolve, reject) => {
-          exec(cmdData.command, { cwd: hostDir, timeout: 300000 }, (err, stdout, stderr) => {
-            const out = stdout.trim();
-            const errText = stderr.trim();
+        // Handle Wazuh specially (direct Python execution with env vars)
+        let executionResult;
+        if (cmdData.isDirectPython && cmdData.envVars) {
+          // Direct Python execution for Wazuh
+          const env = { ...process.env, ...cmdData.envVars };
+          executionResult = await new Promise((resolve, reject) => {
+            exec(cmdData.command, { cwd: hostDir, timeout: 300000, env }, (err, stdout, stderr) => {
+              const out = stdout.trim();
+              const errText = stderr.trim();
 
-            console.log(`${scanner.name} stdout:`, out);
-            if (errText) console.log(`${scanner.name} stderr:`, errText);
+              console.log(`${scanner.name} stdout:`, out);
+              if (errText) console.log(`${scanner.name} stderr:`, errText);
 
-            resolve({
-              success: !(err && !(scannerName === 'zap' && err.code === 2)),
-              stdout: out,
-              stderr: errText,
-              error: err
+              resolve({
+                success: !err,
+                stdout: out,
+                stderr: errText,
+                error: err
+              });
             });
           });
-        });
+        } else {
+          // Docker-based execution for other scanners
+          executionResult = await new Promise((resolve, reject) => {
+            exec(cmdData.command, { cwd: hostDir, timeout: 300000 }, (err, stdout, stderr) => {
+              const out = stdout.trim();
+              const errText = stderr.trim();
+
+              console.log(`${scanner.name} stdout:`, out);
+              if (errText) console.log(`${scanner.name} stderr:`, errText);
+
+              resolve({
+                success: !(err && !(scannerName === 'zap' && err.code === 2)),
+                stdout: out,
+                stderr: errText,
+                error: err
+              });
+            });
+          });
+        }
 
         let parsedVulns = [];
         if (fs.existsSync(cmdData.reportHostPath)) {
@@ -1365,6 +1899,18 @@ app.post('/multi-scan', async (req, res) => {
                   break;
                 case 'wapiti':
                   parsedVulns = parseWapitiReport(rawReport);
+                  break;
+                case 'nmap':
+                  parsedVulns = parseNmapReport(rawReport);
+                  break;
+                case 'trivy':
+                  parsedVulns = parseTrivyReport(rawReport);
+                  break;
+                case 'wazuh':
+                  parsedVulns = parseWazuhReport(rawReport);
+                  break;
+                case 'testssl':
+                  parsedVulns = parseTestsslReport(rawReport);
                   break;
               }
             } else {
@@ -1427,6 +1973,7 @@ app.post('/multi-scan', async (req, res) => {
 
       } catch (scannerError) {
         console.error(`❌ ${scanner.name} error:`, scannerError);
+        failedScanners.push(scannerName);
         scanResults[scannerName] = {
           vulnerabilities: 0,
           status: 'failed',
@@ -1434,18 +1981,30 @@ app.post('/multi-scan', async (req, res) => {
           raw_findings: [],
           execution_details: null
         };
+        // Continue with other scanners - don't fail entire scan
+        console.log(`⚠️ Scanner ${scanner.name} failed, continuing with remaining scanners...`);
       }
     }
 
-    console.log(`\n🎯 PHASE 1 COMPLETE: Collected ${allVulnerabilities.length} raw vulnerabilities from ${validScanners.length} scanners`);
+    const successfulScanners = validScanners.filter(s => !failedScanners.includes(s));
+    console.log(`\n🎯 PHASE 1 COMPLETE: Collected ${allVulnerabilities.length} raw vulnerabilities from ${successfulScanners.length}/${validScanners.length} scanners`);
+    if (failedScanners.length > 0) {
+      console.log(`⚠️ Failed scanners: ${failedScanners.join(', ')}`);
+    }
 
     console.log('\n🎯 PHASE 2: Unified AI processing and deduplication...');
     console.log('='.repeat(60));
 
     const scanMetadata = {
       scanners_used: validScanners,
+      successful_scanners: successfulScanners,
+      failed_scanners: failedScanners,
       scanner_results: scanResults,
+      scan_type: scan_type,
       zap_options: zapOptions,
+      nmap_options: nmapOptions,
+      trivy_options: trivyOptions,
+      testssl_options: testsslOptions,
       target: target,
       scan_timestamp: new Date().toISOString()
     };
@@ -1566,9 +2125,11 @@ app.post('/multi-scan', async (req, res) => {
     };
 
     // Final update: Mark as completed with enhanced summary
-    const completionMessage = `🎉 Multi-scan completed successfully!
+    const successStatus = failedScanners.length === 0 ? 'successfully' : `with ${failedScanners.length} scanner failure(s)`;
+    const completionMessage = `🎉 Multi-scan completed ${successStatus}!
 📊 Results: ${unifiedResults.processedVulnerabilities.length} unique vulnerabilities (${allVulnerabilities.length} raw findings)
-🔍 Scanners: ${validScanners.join(', ')}
+🔍 Scanners: ${successfulScanners.join(', ')}${failedScanners.length > 0 ? ` (Failed: ${failedScanners.join(', ')})` : ''}
+📋 Scan Type: ${scan_type}
 🤖 AI Analysis: ${unifiedResults.aiAnalysis.summary.overall_risk_assessment}
 🔗 Deduplication: ${unifiedResults.aiAnalysis.summary.duplicates_merged} duplicates merged`;
 
@@ -1819,6 +2380,11 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`   ✅ Comprehensive Logging`);
   console.log(`   ✅ Scanner Attribution`);
   console.log(`   ✅ Universal Vulnerability Processing`);
+  console.log(`   ✅ Multi-Layer Scanning (Web, Network, Infrastructure, Container)`);
+  console.log(`   ✅ Partial Failure Handling`);
   console.log('='.repeat(60));
   console.log('🚀 Ready to process multi-scanner security assessments!');
+  
+  // Pre-populate Trivy cache asynchronously (non-blocking)
+  prepopulateTrivyCache();
 });
