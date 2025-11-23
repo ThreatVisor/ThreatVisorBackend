@@ -2,11 +2,12 @@
 // COMPLETE UNIFIED AI MULTI-SCANNER with Enhanced Logging and Fixed Processing
 import express from 'express';
 import 'dotenv/config';
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
+import multer from 'multer';
 
 const app = express();
 app.use(express.json());
@@ -19,12 +20,21 @@ const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-202509
 const hostDir = path.resolve('.');
 const reportsDir = path.join(hostDir, 'reports');
 const scriptsDir = path.join(hostDir, 'scripts');
+const uploadsDir = path.join(hostDir, 'tmp', 'uploads');
 
 // Ensure reports and scripts directories exist with proper permissions
-[reportsDir, scriptsDir].forEach(dir => {
+[reportsDir, scriptsDir, uploadsDir].forEach(dir => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
     fs.chmodSync(dir, 0o777);
+  }
+});
+
+// Configure multer for file uploads
+const upload = multer({ 
+  dest: uploadsDir,
+  limits: { 
+    fileSize: 50 * 1024 * 1024  // 50MB max file size
   }
 });
 
@@ -100,6 +110,15 @@ const SCANNERS = {
     containerWorkDir: '/tmp/reports',
     layer: 'network',
     scanner_category: 'network'
+  },
+  tenable: {
+    name: 'Tenable.io',
+    containerName: null, // API-based, no container
+    reportFile: 'tenable_report.json',
+    reportFormat: 'json',
+    containerWorkDir: '/tmp/reports',
+    layer: 'infrastructure',
+    scanner_category: 'infrastructure'
   }
 };
 
@@ -2300,6 +2319,430 @@ app.get('/scan/:scanId/ai-summary', async (req, res) => {
     console.error('❌ Error fetching AI summary:', error);
     res.status(500).json({ error: 'Failed to fetch AI summary' });
   }
+});
+
+// Helper function to save vulnerabilities to Supabase
+async function saveVulnerabilitiesToSupabase(supabase, scanId, vulnerabilities) {
+  if (vulnerabilities.length === 0) {
+    return { inserted: [], error: null };
+  }
+
+  const { data: inserted, error } = await supabase
+    .from("vulnerabilities")
+    .insert(vulnerabilities)
+    .select();
+
+  return { inserted: inserted || [], error };
+}
+
+// Helper function to update scan status
+async function updateScanStatus(supabase, scanId, status, message, progress) {
+  const updateData = { status, progress: progress || 100 };
+  if (message) updateData.message = message;
+  if (status === 'completed') {
+    updateData.completed_at = new Date().toISOString();
+  }
+
+  const { error } = await supabase
+    .from("scan_reports")
+    .update(updateData)
+    .eq("id", scanId);
+
+  return { error };
+}
+
+// File upload endpoint for scan imports
+app.post('/upload-scan-file', upload.single('scanFile'), async (req, res) => {
+  console.log('\n📤 FILE UPLOAD REQUEST RECEIVED');
+  console.log('='.repeat(60));
+  
+  try {
+    // Validate request
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'No file uploaded' });
+    }
+    
+    const { scanId, fileType, supabaseUrl, supabaseKey, companyContext } = req.body;
+    
+    if (!scanId || !fileType) {
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(400).json({ success: false, error: 'Missing scanId or fileType' });
+    }
+
+    if (!supabaseUrl || !supabaseKey) {
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(400).json({ success: false, error: 'Missing supabaseUrl or supabaseKey' });
+    }
+    
+    const filePath = req.file.path;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    console.log(`  📄 Processing ${fileType} file: ${req.file.originalname}`);
+    console.log(`  📊 File size: ${(req.file.size / 1024).toFixed(2)} KB`);
+    console.log(`  🆔 Scan ID: ${scanId}`);
+    
+    // Update scan status to running
+    await updateScanStatus(supabase, scanId, 'running', 'Parsing uploaded scan file...', 10);
+    
+    // Call Python parser
+    const cmd = `python3 "${path.join(scriptsDir, 'parse_scan_file.py')}" "${filePath}" "${fileType}"`;
+    
+    let parsedData;
+    try {
+      const result = execSync(cmd, { 
+        encoding: 'utf-8',
+        maxBuffer: 10 * 1024 * 1024,  // 10MB output buffer
+        timeout: 60000  // 60 second timeout
+      });
+      
+      parsedData = JSON.parse(result);
+      
+      if (parsedData.error) {
+        throw new Error(parsedData.error);
+      }
+    } catch (parseError) {
+      console.error('❌ Parse error:', parseError.message);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      await updateScanStatus(supabase, scanId, 'failed', `Failed to parse file: ${parseError.message}`, 0);
+      return res.status(500).json({ 
+        success: false, 
+        error: `Failed to parse file: ${parseError.message}` 
+      });
+    }
+    
+    console.log(`  ✅ Parsed ${parsedData.vulnerabilities.length} vulnerabilities`);
+    
+    // Clean up uploaded file
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(`  🧹 Cleaned up uploaded file`);
+    }
+    
+    // Process vulnerabilities through AI pipeline
+    console.log('\n🎯 Processing vulnerabilities through AI pipeline...');
+    await updateScanStatus(supabase, scanId, 'running', 'Processing vulnerabilities with AI...', 30);
+    
+    // Build company profile from context if provided
+    let companyProfile = null;
+    if (companyContext) {
+      companyProfile = {
+        company_name: companyContext.company_name || null,
+        industry: companyContext.industry || null,
+        website_purpose: companyContext.website_purpose || companyContext.type || null,
+        data_records_count: companyContext.data_records_count || null,
+        downtime_cost_per_hour: companyContext.downtime_cost_per_hour || null,
+        compliance_requirements: companyContext.compliance_requirements || [],
+        geographic_region: companyContext.geographic_region || companyContext.region || null,
+        annual_revenue: companyContext.annual_revenue || null,
+        employee_count: companyContext.employee_count || null
+      };
+    }
+    
+    // Create scan metadata
+    const scanMetadata = {
+      scanners_used: [parsedData.scanner],
+      successful_scanners: [parsedData.scanner],
+      failed_scanners: [],
+      scanner_results: {
+        [parsedData.scanner]: {
+          vulnerabilities: parsedData.vulnerabilities.length,
+          status: 'completed',
+          raw_findings: parsedData.vulnerabilities
+        }
+      },
+      scan_type: 'file_import',
+      target: 'file_upload',
+      scan_timestamp: new Date().toISOString(),
+      ...parsedData.scan_metadata
+    };
+    
+    // Process through AI pipeline
+    const unifiedResults = await processAllVulnerabilitiesUnified(
+      parsedData.vulnerabilities,
+      scanMetadata.scanner_results,
+      scanMetadata,
+      'file_upload',
+      scanId,
+      supabase,
+      companyProfile
+    );
+    
+    console.log(`  ✅ AI processed ${unifiedResults.processedVulnerabilities.length} unique vulnerabilities`);
+    
+    // Save to database
+    await updateScanStatus(supabase, scanId, 'running', 'Saving vulnerabilities to database...', 90);
+    
+    if (unifiedResults.processedVulnerabilities.length > 0) {
+      const { inserted, error: dbError } = await saveVulnerabilitiesToSupabase(
+        supabase,
+        scanId,
+        unifiedResults.processedVulnerabilities
+      );
+      
+      if (dbError) {
+        console.error('❌ Database error:', dbError);
+        await updateScanStatus(supabase, scanId, 'failed', `Database error: ${dbError.message}`, 0);
+        return res.status(500).json({ success: false, error: `Database error: ${dbError.message}` });
+      }
+      
+      console.log(`  💾 Saved ${inserted.length} vulnerabilities to Supabase`);
+      
+      // Update scan status to completed
+      const completionMessage = `File import completed: ${inserted.length} vulnerabilities from ${parsedData.scanner}`;
+      await updateScanStatus(supabase, scanId, 'completed', completionMessage, 100);
+      
+      // Return success
+      res.json({
+        success: true,
+        scanner: parsedData.scanner,
+        vulnerabilities_found: parsedData.vulnerabilities.length,
+        vulnerabilities_saved: inserted.length,
+        scan_id: scanId,
+        file_type: fileType,
+        original_filename: req.file.originalname,
+        ai_processed: true
+      });
+    } else {
+      await updateScanStatus(supabase, scanId, 'completed', 'File import completed: No vulnerabilities found', 100);
+      res.json({
+        success: true,
+        scanner: parsedData.scanner,
+        vulnerabilities_found: 0,
+        vulnerabilities_saved: 0,
+        scan_id: scanId,
+        file_type: fileType,
+        original_filename: req.file.originalname,
+        ai_processed: true
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ File upload error:', error);
+    
+    // Clean up file if it exists
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    
+    // Try to update scan status if we have the scanId
+    if (req.body.scanId && req.body.supabaseUrl && req.body.supabaseKey) {
+      try {
+        const supabase = createClient(req.body.supabaseUrl, req.body.supabaseKey);
+        await updateScanStatus(supabase, req.body.scanId, 'failed', `Error: ${error.message}`, 0);
+      } catch (updateError) {
+        console.error('Failed to update scan status:', updateError);
+      }
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Unknown error during file processing'
+    });
+  }
+});
+
+// Tenable.io scan endpoint
+app.post('/tenable-scan', async (req, res) => {
+  console.log('\n🔍 TENABLE.IO SCAN REQUEST RECEIVED');
+  console.log('='.repeat(60));
+  
+  const { scanId, supabaseUrl, supabaseKey, tenableCredentials, companyContext } = req.body;
+  
+  if (!scanId || !supabaseUrl || !supabaseKey) {
+    return res.status(400).json({ success: false, error: 'Missing scanId, supabaseUrl, or supabaseKey' });
+  }
+  
+  if (!tenableCredentials || !tenableCredentials.access_key || !tenableCredentials.secret_key) {
+    return res.status(400).json({ success: false, error: 'Missing Tenable credentials (access_key, secret_key)' });
+  }
+  
+  console.log(`  🆔 Scan ID: ${scanId}`);
+  console.log(`  🔑 Tenable API URL: ${tenableCredentials.api_url || 'https://cloud.tenable.com'}`);
+  
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  
+  res.status(202).json({
+    success: true,
+    message: 'Tenable scan started',
+    scanId
+  });
+  
+  try {
+    // Update scan status to running
+    await updateScanStatus(supabase, scanId, 'running', 'Connecting to Tenable.io...', 10);
+    
+    // Build company profile from context if provided
+    let companyProfile = null;
+    if (companyContext) {
+      companyProfile = {
+        company_name: companyContext.company_name || null,
+        industry: companyContext.industry || null,
+        website_purpose: companyContext.website_purpose || companyContext.type || null,
+        data_records_count: companyContext.data_records_count || null,
+        downtime_cost_per_hour: companyContext.downtime_cost_per_hour || null,
+        compliance_requirements: companyContext.compliance_requirements || [],
+        geographic_region: companyContext.geographic_region || companyContext.region || null,
+        annual_revenue: companyContext.annual_revenue || null,
+        employee_count: companyContext.employee_count || null
+      };
+    }
+    
+    // Call Python script
+    await updateScanStatus(supabase, scanId, 'running', 'Fetching scan results from Tenable.io...', 30);
+    
+    const credentialsJson = JSON.stringify(tenableCredentials);
+    const cmd = `python3 "${path.join(scriptsDir, 'tenable_scanner.py')}" '${credentialsJson.replace(/'/g, "'\\''")}'`;
+    
+    let tenableData;
+    try {
+      const result = execSync(cmd, {
+        encoding: 'utf-8',
+        maxBuffer: 10 * 1024 * 1024,  // 10MB output buffer
+        timeout: 120000  // 2 minute timeout for Tenable API
+      });
+      
+      tenableData = JSON.parse(result);
+      
+      if (tenableData.error) {
+        throw new Error(tenableData.error);
+      }
+    } catch (execError) {
+      console.error('❌ Tenable script error:', execError.message);
+      await updateScanStatus(supabase, scanId, 'failed', `Tenable integration failed: ${execError.message}`, 0);
+      return;
+    }
+    
+    console.log(`  ✅ Fetched ${tenableData.vulnerabilities.length} vulnerabilities from Tenable.io`);
+    
+    // Process vulnerabilities through AI pipeline
+    await updateScanStatus(supabase, scanId, 'running', 'Processing vulnerabilities with AI...', 50);
+    
+    const scanMetadata = {
+      scanners_used: ['tenable'],
+      successful_scanners: ['tenable'],
+      failed_scanners: [],
+      scanner_results: {
+        tenable: {
+          vulnerabilities: tenableData.vulnerabilities.length,
+          status: 'completed',
+          raw_findings: tenableData.vulnerabilities
+        }
+      },
+      scan_type: 'infrastructure',
+      target: tenableData.target || 'Tenable Scan',
+      scan_timestamp: new Date().toISOString(),
+      ...tenableData.scan_metadata
+    };
+    
+    const unifiedResults = await processAllVulnerabilitiesUnified(
+      tenableData.vulnerabilities,
+      scanMetadata.scanner_results,
+      scanMetadata,
+      tenableData.target || 'Tenable Scan',
+      scanId,
+      supabase,
+      companyProfile
+    );
+    
+    console.log(`  ✅ AI processed ${unifiedResults.processedVulnerabilities.length} unique vulnerabilities`);
+    
+    // Save to database
+    await updateScanStatus(supabase, scanId, 'running', 'Saving vulnerabilities to database...', 90);
+    
+    if (unifiedResults.processedVulnerabilities.length > 0) {
+      const { inserted, error: dbError } = await saveVulnerabilitiesToSupabase(
+        supabase,
+        scanId,
+        unifiedResults.processedVulnerabilities
+      );
+      
+      if (dbError) {
+        console.error('❌ Database error:', dbError);
+        await updateScanStatus(supabase, scanId, 'failed', `Database error: ${dbError.message}`, 0);
+        return;
+      }
+      
+      console.log(`  💾 Saved ${inserted.length} vulnerabilities to Supabase`);
+      
+      // Update scan status to completed
+      const completionMessage = `Tenable.io scan completed: ${inserted.length} vulnerabilities from ${tenableData.scan_metadata.scan_name || 'Tenable Scan'}`;
+      await updateScanStatus(supabase, scanId, 'completed', completionMessage, 100);
+      
+      console.log('✅ Tenable.io scan completed successfully');
+    } else {
+      await updateScanStatus(supabase, scanId, 'completed', 'Tenable.io scan completed: No vulnerabilities found', 100);
+    }
+    
+  } catch (error) {
+    console.error('❌ Tenable scan error:', error);
+    try {
+      await updateScanStatus(supabase, scanId, 'failed', `Error: ${error.message}`, 0);
+    } catch (updateError) {
+      console.error('Failed to update scan status:', updateError);
+    }
+  }
+});
+
+// "Coming Soon" stub endpoints for future integrations
+app.post('/scanners/qualys/test', async (req, res) => {
+  res.json({
+    success: false,
+    coming_soon: true,
+    message: 'Qualys VMDR integration coming Q1 2025. Join waitlist for early access.',
+    features: ['Vulnerability aggregation', 'Compliance mapping', 'Asset inventory'],
+    expected_release: 'Q1 2025',
+    beta_signup: 'https://threatvisor.ai/beta'
+  });
+});
+
+app.post('/scanners/crowdstrike/test', async (req, res) => {
+  res.json({
+    success: false,
+    coming_soon: true,
+    message: 'CrowdStrike Falcon Spotlight integration coming Q1 2025.',
+    features: ['Endpoint vulnerabilities', 'Real-time threat correlation', 'EDR integration'],
+    expected_release: 'Q1 2025',
+    beta_signup: 'https://threatvisor.ai/beta'
+  });
+});
+
+app.post('/scanners/defender/test', async (req, res) => {
+  res.json({
+    success: false,
+    coming_soon: true,
+    message: 'Microsoft Defender for Endpoint integration coming Q1 2025.',
+    features: ['Azure AD integration', 'Defender ATP data', 'Office 365 security'],
+    expected_release: 'Q1 2025',
+    beta_signup: 'https://threatvisor.ai/beta'
+  });
+});
+
+app.post('/scanners/splunk/test', async (req, res) => {
+  res.json({
+    success: false,
+    coming_soon: true,
+    message: 'Splunk SIEM correlation coming Q1 2025.',
+    features: ['Log correlation', 'Threat hunting', 'Incident timeline'],
+    expected_release: 'Q1 2025',
+    beta_signup: 'https://threatvisor.ai/beta'
+  });
+});
+
+app.post('/scans/schedule', async (req, res) => {
+  res.json({
+    success: false,
+    coming_soon: true,
+    message: 'Scheduled scanning feature coming Q1 2025.',
+    features: ['Recurring scans', 'Maintenance windows', 'Auto-remediation triggers'],
+    expected_release: 'Q1 2025',
+    beta_signup: 'https://threatvisor.ai/beta'
+  });
 });
 
 // Scanner info endpoint
