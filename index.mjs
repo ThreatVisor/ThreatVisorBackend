@@ -200,7 +200,7 @@ async function processAllVulnerabilitiesWithAI(allVulnerabilities, scanMetadata,
   console.log('🏢 BUSINESS CONTEXT CONSTRUCTION FOR AI ANALYSIS');
   console.log('='.repeat(80));
   console.log(`📊 Company Profile Available: ${companyProfile ? 'YES' : 'NO'}`);
-  
+
   let businessContext = "";
   if (companyProfile) {
     console.log('✅ Building business context string from company profile...');
@@ -264,6 +264,148 @@ async function processAllVulnerabilitiesWithAI(allVulnerabilities, scanMetadata,
   const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
   });
+
+  // Define JSON schema for structured outputs (guarantees valid JSON)
+  const vulnerabilityAnalysisSchema = {
+    type: "object",
+    properties: {
+      summary: {
+        type: "object",
+        properties: {
+          total_unique_vulnerabilities: { type: "integer" },
+          duplicates_merged: { type: "integer" },
+          overall_risk_assessment: { type: "string" }
+        },
+        required: ["total_unique_vulnerabilities", "duplicates_merged", "overall_risk_assessment"],
+        additionalProperties: false
+      },
+      vulnerabilities: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            main_description: { type: "string" },
+            ai_security_analysis: { type: "string" },
+            business_impact: { type: "string" },
+            technical_impact: { type: "string" },
+            solution_summary: { type: "string" },
+            prevention_practices: {
+              type: "array",
+              items: { type: "string" }
+            },
+            compliance_considerations: { type: "string" },
+            remediation_priority: { 
+              type: "string",
+              enum: ["critical", "high", "medium", "low"]
+            },
+            references: {
+              type: "array",
+              items: { type: "string" }
+            },
+            attack_scenarios: {
+              type: "array",
+              items: { type: "string" }
+            },
+            detailed_remediation_steps: {
+              type: "array",
+              items: { type: "string" }
+            },
+            scanners_detected: {
+              type: "array",
+              items: { type: "string" }
+            },
+            severity: {
+              type: "string",
+              enum: ["critical", "high", "medium", "low", "info"]
+            },
+            exploit_difficulty: {
+              type: "string",
+              enum: ["trivial", "easy", "moderate", "difficult", "unknown"]
+            },
+            impact_score: { type: "integer" },
+            cvss_vector: { type: "string" },
+            cvss_score: { type: "number" },
+            false_positive_likelihood: {
+              type: "string",
+              enum: ["Low", "Medium", "High"]
+            },
+            false_positive_reasoning: { type: "string" },
+            compliance_controls: {
+              type: "array",
+              items: { type: "string" }
+            },
+            cve_ids: {
+              type: "array",
+              items: { type: "string" }
+            },
+            cwe_id: { 
+              type: ["integer", "null"],
+              default: null
+            },
+            wasc_id: { 
+              type: ["integer", "null"],
+              default: null
+            },
+            layer: {
+              type: "string",
+              enum: ["web", "network", "infrastructure", "container"]
+            },
+            scanner_category: {
+              type: "string",
+              enum: ["web_app", "network", "infrastructure", "container"]
+            },
+            asset_type: {
+              type: "string",
+              enum: ["url", "ip_address", "hostname", "container_image"]
+            },
+            asset_identifier: { type: "string" },
+            hostname: { 
+              type: ["string", "null"],
+              default: null
+            },
+            ip_address: { 
+              type: ["string", "null"],
+              default: null
+            },
+            port: { 
+              type: ["integer", "null"],
+              default: null
+            },
+            service: { 
+              type: ["string", "null"],
+              default: null
+            },
+            package_name: { 
+              type: ["string", "null"],
+              default: null
+            },
+            installed_version: { 
+              type: ["string", "null"],
+              default: null
+            },
+            fixed_version: { 
+              type: ["string", "null"],
+              default: null
+            }
+          },
+          required: [
+            "title", "main_description", "ai_security_analysis", "business_impact",
+            "technical_impact", "solution_summary", "prevention_practices",
+            "compliance_considerations", "remediation_priority", "references",
+            "attack_scenarios", "detailed_remediation_steps", "scanners_detected",
+            "severity", "exploit_difficulty", "impact_score", "cvss_vector",
+            "cvss_score", "false_positive_likelihood", "false_positive_reasoning",
+            "compliance_controls", "cve_ids", "layer", "scanner_category",
+            "asset_type", "asset_identifier"
+          ],
+          additionalProperties: false
+        }
+      }
+    },
+    required: ["summary", "vulnerabilities"],
+    additionalProperties: false
+  };
 
   // OPTIMIZED PROMPT: Enforce conciseness and JSON structure
   const systemPrompt = `You are a senior cybersecurity analyst. CRITICAL RULES:
@@ -456,205 +598,48 @@ Return ONLY valid JSON with no additional text or comments.`;
           await new Promise(resolve => setTimeout(resolve, backoffMs));
         }
         
-        const msg = await anthropic.messages.create({
-          model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929",
-          max_tokens: 8000, // Increased to handle longer responses
-          temperature: 0.2, // Lower temperature for more consistent JSON
-          system: systemPrompt,
-          messages: [
-            {
-              role: "user",
-              content: prompt
-            }
-          ]
+        const msg = await anthropic.beta.messages.create({
+        model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929",
+          max_tokens: 8000,
+          temperature: 0.2,
+          betas: ["structured-outputs-2025-11-13"], // Enable structured outputs
+        system: systemPrompt,
+        messages: [
+          {
+            role: "user",
+            content: prompt
+          }
+          ],
+          output_format: {
+            type: "json_schema",
+            schema: vulnerabilityAnalysisSchema
+          }
         });
 
-        let aiResponse = msg.content[0].text.trim();
-        
+        // With structured outputs, response is guaranteed valid JSON
+      let aiResponse = msg.content[0].text.trim();
+
         // Check if response was truncated
         if (msg.stop_reason === 'max_tokens') {
           console.warn(`   ⚠️ Response may be truncated (max_tokens reached)`);
         }
 
-        // Clean markdown code blocks if present
-        if (aiResponse.includes('```json')) {
-          aiResponse = aiResponse.replace(/```json\n?|\n?```/g, '').trim();
-        } else if (aiResponse.includes('```')) {
-          aiResponse = aiResponse.replace(/```\n?|\n?```/g, '').trim();
-        }
-
-        // IMPROVED JSON EXTRACTION - Find the largest valid JSON object
-        let jsonStart = aiResponse.indexOf('{');
-        let jsonEnd = aiResponse.lastIndexOf('}');
-        
-        // If no clear JSON boundaries, try to find them
-        if (jsonStart === -1 || jsonEnd === -1 || jsonEnd <= jsonStart) {
-          // Try to find JSON by looking for "summary" or "vulnerabilities" keys
-          const summaryMatch = aiResponse.match(/"summary"\s*:/);
-          const vulnsMatch = aiResponse.match(/"vulnerabilities"\s*:/);
-          
-          if (summaryMatch) {
-            jsonStart = summaryMatch.index - 1; // Go back to find opening brace
-            let braceCount = 0;
-            for (let i = jsonStart; i >= 0; i--) {
-              if (aiResponse[i] === '{') {
-                jsonStart = i;
-                break;
-              }
-            }
-          }
-          
-          if (vulnsMatch && jsonEnd === -1) {
-            // Find the closing brace for the root object containing vulnerabilities
-            let braceCount = 0;
-            let bracketCount = 0;
-            let inString = false;
-            let escapeNext = false;
-            let foundStart = false;
-            
-            for (let i = 0; i < aiResponse.length; i++) {
-              const char = aiResponse[i];
-              
-              if (escapeNext) {
-                escapeNext = false;
-                continue;
-              }
-              
-              if (char === '\\') {
-                escapeNext = true;
-                continue;
-              }
-              
-              if (char === '"' && !escapeNext) {
-                inString = !inString;
-                continue;
-              }
-              
-              if (!inString) {
-                if (char === '{') {
-                  braceCount++;
-                  foundStart = true;
-                }
-                if (char === '}') {
-                  braceCount--;
-                  if (foundStart && braceCount === 0 && bracketCount === 0) {
-                    jsonEnd = i;
-                    break;
-                  }
-                }
-                if (char === '[') bracketCount++;
-                if (char === ']') bracketCount--;
-              }
-            }
-          }
-        }
-        
-        if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-          aiResponse = aiResponse.substring(jsonStart, jsonEnd + 1);
-        }
-
-        // IMPROVED JSON REPAIR with multiple strategies
-        try {
-          parsedResponse = JSON.parse(aiResponse);
-        } catch (parseError) {
+        // With structured outputs, response is guaranteed valid JSON - no parsing needed!
+        // Just parse directly - it will always be valid
+      try {
+        parsedResponse = JSON.parse(aiResponse);
+      } catch (parseError) {
+          // This should never happen with structured outputs, but handle gracefully
           if (attempt < maxRetries - 1) {
-            console.warn(`⚠️ Batch ${batchIndex + 1} JSON parse failed (attempt ${attempt + 1}), will retry...`);
+            console.warn(`⚠️ Batch ${batchIndex + 1} unexpected parse error (attempt ${attempt + 1}), will retry...`);
             lastError = parseError;
             continue; // Retry
           }
           
-          console.warn(`⚠️ Batch ${batchIndex + 1} JSON parse failed, attempting repair...`);
+          console.error(`❌ Batch ${batchIndex + 1} unexpected JSON parse error with structured outputs:`, parseError.message);
           console.log(`🔍 Response length: ${aiResponse.length} chars`);
           console.log(`🔍 First 500 chars: ${aiResponse.substring(0, 500)}`);
-          console.log(`🔍 Last 500 chars: ${aiResponse.substring(Math.max(0, aiResponse.length - 500))}`);
-
-          // Advanced JSON repair strategies
-          let repaired = aiResponse.trim();
-          
-          // Strategy 1: Remove trailing commas
-          repaired = repaired.replace(/,(\s*[}\]])/g, '$1');
-          
-          // Strategy 2: Close incomplete strings
-          repaired = repaired.replace(/"([^"]*)$/g, '"$1"');
-          
-          // Strategy 3: Count and balance braces/brackets
-          const openBraces = (repaired.match(/\{/g) || []).length;
-          const closeBraces = (repaired.match(/\}/g) || []).length;
-          const openBrackets = (repaired.match(/\[/g) || []).length;
-          const closeBrackets = (repaired.match(/\]/g) || []).length;
-          
-          // Strategy 4: Find incomplete arrays/objects and close them
-          let depth = 0;
-          let inString = false;
-          let escapeNext = false;
-          let lastValidPos = repaired.length - 1;
-          
-          for (let i = 0; i < repaired.length; i++) {
-            const char = repaired[i];
-            
-            if (escapeNext) {
-              escapeNext = false;
-              continue;
-            }
-            
-            if (char === '\\') {
-              escapeNext = true;
-              continue;
-            }
-            
-            if (char === '"' && !escapeNext) {
-              inString = !inString;
-              continue;
-            }
-            
-            if (!inString) {
-              if (char === '{' || char === '[') depth++;
-              if (char === '}' || char === ']') depth--;
-              
-              if (depth === 0 && (char === '}' || char === ']')) {
-                lastValidPos = i;
-              }
-            }
-          }
-          
-          // If we found a valid position, truncate there
-          if (lastValidPos < repaired.length - 1 && depth > 0) {
-            repaired = repaired.substring(0, lastValidPos + 1);
-            // Close remaining open structures
-            while (depth > 0) {
-              repaired += '}';
-              depth--;
-            }
-          } else {
-            // Append missing closing characters
-            if (openBrackets > closeBrackets) repaired += ']'.repeat(openBrackets - closeBrackets);
-            if (openBraces > closeBraces) repaired += '}'.repeat(openBraces - closeBraces);
-          }
-          
-          // Strategy 5: Fix incomplete array/object items
-          // Remove trailing incomplete items in arrays
-          repaired = repaired.replace(/,\s*"[^"]*$/, '');
-          repaired = repaired.replace(/,\s*\{[^}]*$/, '');
-          
-          try {
-            parsedResponse = JSON.parse(repaired);
-            console.log(`✅ Batch ${batchIndex + 1} repaired successfully`);
-          } catch (repairError) {
-            console.error(`❌ Batch ${batchIndex + 1} repair failed:`, repairError.message);
-            // Last resort: try to extract just the vulnerabilities array
-            const vulnsMatch = repaired.match(/"vulnerabilities"\s*:\s*\[([\s\S]*)\]/);
-            if (vulnsMatch) {
-              try {
-                const vulnsJson = `{"summary": {"total_unique_vulnerabilities": ${currentBatch.length}, "duplicates_merged": 0, "overall_risk_assessment": "Analysis incomplete due to parsing error"}, "vulnerabilities": [${vulnsMatch[1]}]}`;
-                parsedResponse = JSON.parse(vulnsJson);
-                console.log(`⚠️ Batch ${batchIndex + 1} partial recovery: extracted vulnerabilities array only`);
-              } catch (partialError) {
-                throw repairError; // Give up
-              }
-            } else {
-              throw repairError;
-            }
-          }
+          throw parseError; // This shouldn't happen with structured outputs
         }
         
         // Success - break out of retry loop
@@ -690,12 +675,12 @@ Return ONLY valid JSON with no additional text or comments.`;
     }
     if (parsedResponse && parsedResponse.summary && parsedResponse.summary.duplicates_merged) {
       mergedDuplicatesCount += parsedResponse.summary.duplicates_merged || 0;
-    }
+      }
 
-        console.log(`✅ Batch ${batchIndex + 1} success: ${parsedResponse.vulnerabilities?.length || 0} vulns processed`);
+      console.log(`✅ Batch ${batchIndex + 1} success: ${parsedResponse.vulnerabilities?.length || 0} vulns processed`);
         break; // Success, exit retry loop
-        
-      } catch (batchError) {
+
+    } catch (batchError) {
         lastError = batchError;
         if (attempt === maxRetries - 1) {
           console.error(`❌ Batch ${batchIndex + 1} failed after ${maxRetries} attempts:`, batchError.message);
@@ -1968,10 +1953,10 @@ app.post('/multi-scan', async (req, res) => {
       
       try {
         const { data: scanReport, error: scanReportError } = await supabase
-          .from('scan_reports')
-          .select('company_profile_id')
-          .eq('id', scanId)
-          .single();
+        .from('scan_reports')
+        .select('company_profile_id')
+        .eq('id', scanId)
+        .single();
 
         if (scanReportError) {
           console.error('❌ Error fetching scan report:', scanReportError);
@@ -1979,22 +1964,22 @@ app.post('/multi-scan', async (req, res) => {
         } else {
           console.log('✅ Scan report fetched successfully');
           console.log(`📋 Scan report data:`, JSON.stringify(scanReport, null, 2));
-          
-          if (scanReport?.company_profile_id) {
+
+      if (scanReport?.company_profile_id) {
             console.log(`\n🔗 Company profile ID found: ${scanReport.company_profile_id}`);
             console.log(`📥 Fetching company profile from database...`);
             
             const { data: profile, error: profileError } = await supabase
-              .from('company_profiles')
-              .select('*')
-              .eq('id', scanReport.company_profile_id)
-              .single();
+          .from('company_profiles')
+          .select('*')
+          .eq('id', scanReport.company_profile_id)
+          .single();
             
             if (profileError) {
               console.error('❌ Error fetching company profile:', profileError);
               console.error('   Error details:', JSON.stringify(profileError, null, 2));
             } else if (profile) {
-              companyProfile = profile;
+        companyProfile = profile;
               console.log('\n✅ COMPANY PROFILE LOADED FROM DATABASE:');
               console.log('-'.repeat(60));
               console.log(`   Company Name: ${companyProfile.company_name || 'N/A'}`);
@@ -2012,9 +1997,9 @@ app.post('/multi-scan', async (req, res) => {
           } else {
             console.log('ℹ️  No company_profile_id found in scan report - business context will not be used');
             console.log('   This is normal if no company profile was associated with this scan');
-          }
         }
-      } catch (ctxError) {
+      }
+    } catch (ctxError) {
         console.error('❌ Exception while loading business context from database:', ctxError);
         console.error('   Error message:', ctxError.message);
         console.error('   Stack trace:', ctxError.stack);
@@ -2112,21 +2097,21 @@ app.post('/multi-scan', async (req, res) => {
         } else {
           // Docker-based execution for other scanners
           executionResult = await new Promise((resolve, reject) => {
-            exec(cmdData.command, { cwd: hostDir, timeout: 300000 }, (err, stdout, stderr) => {
-              const out = stdout.trim();
-              const errText = stderr.trim();
+          exec(cmdData.command, { cwd: hostDir, timeout: 300000 }, (err, stdout, stderr) => {
+            const out = stdout.trim();
+            const errText = stderr.trim();
 
-              console.log(`${scanner.name} stdout:`, out);
-              if (errText) console.log(`${scanner.name} stderr:`, errText);
+            console.log(`${scanner.name} stdout:`, out);
+            if (errText) console.log(`${scanner.name} stderr:`, errText);
 
-              resolve({
-                success: !(err && !(scannerName === 'zap' && err.code === 2)),
-                stdout: out,
-                stderr: errText,
-                error: err
-              });
+            resolve({
+              success: !(err && !(scannerName === 'zap' && err.code === 2)),
+              stdout: out,
+              stderr: errText,
+              error: err
             });
           });
+        });
         }
 
         let parsedVulns = [];
